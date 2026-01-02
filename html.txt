@@ -1,182 +1,726 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>TALON EDDYLINE - Airfield Change Detection System</title>
-    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
-    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-    <style>
-        * { margin: 0; padding: 0; box-sizing: border-box; }
-        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; height: 100vh; display: flex; flex-direction: column; overflow: hidden; }
-        .header { background: #1e293b; color: white; padding: 1rem 2rem; box-shadow: 0 2px 8px rgba(0,0,0,0.3); z-index: 1000; }
-        .header-content { display: flex; justify-content: space-between; align-items: center; max-width: 1400px; margin: 0 auto; }
-        .header-left { display: flex; align-items: center; gap: 1rem; }
-        .logo-badge { background: #dc2626; padding: 0.25rem 0.75rem; border-radius: 4px; font-weight: bold; font-size: 0.875rem; }
-        .title { font-size: 1.5rem; font-weight: bold; }
-        .subtitle { color: #cbd5e1; font-size: 0.875rem; }
-        .classification { font-size: 0.75rem; color: #94a3b8; }
-        #map { flex: 1; position: relative; }
-        .legend { position: absolute; bottom: 20px; left: 20px; background: white; padding: 1rem; border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.2); z-index: 1000; max-width: 280px; }
-        .legend h4 { font-size: 0.875rem; font-weight: bold; margin-bottom: 0.75rem; color: #1e293b; }
-        .legend-item { display: flex; align-items: center; gap: 0.5rem; font-size: 0.75rem; margin-bottom: 0.5rem; }
-        .legend-color { width: 12px; height: 12px; border-radius: 2px; }
-        .legend-info { margin-top: 0.75rem; padding-top: 0.75rem; border-top: 1px solid #e2e8f0; font-size: 0.75rem; color: #64748b; }
-        .leaflet-popup-content-wrapper { border-radius: 8px; padding: 0; overflow: hidden; }
-        .leaflet-popup-content { margin: 0; width: 380px !important; }
-        .popup-container { padding: 1rem; }
-        .popup-title { font-size: 1.125rem; font-weight: bold; color: #1e293b; margin-bottom: 0.5rem; }
-        .popup-subtitle { font-size: 0.875rem; color: #64748b; margin-bottom: 1rem; }
-        .detection-card { border: 1px solid #e2e8f0; border-radius: 6px; padding: 0.75rem; margin-bottom: 0.5rem; cursor: pointer; transition: all 0.2s; }
-        .detection-card:hover { background: #f8fafc; border-color: #cbd5e1; }
-        .detection-header { display: flex; justify-content: space-between; align-items: start; margin-bottom: 0.5rem; }
-        .detection-type { font-size: 0.875rem; font-weight: 600; color: #1e293b; }
-        .priority-badge { background: #e2e8f0; padding: 0.125rem 0.5rem; border-radius: 4px; font-size: 0.75rem; font-weight: 600; }
-        .detection-desc { font-size: 0.75rem; color: #64748b; margin-bottom: 0.5rem; line-height: 1.4; }
-        .detection-footer { display: flex; justify-content: space-between; align-items: center; font-size: 0.75rem; }
-        .confidence { color: #64748b; }
-        .view-btn { background: #2563eb; color: white; border: none; padding: 0.25rem 0.75rem; border-radius: 4px; font-size: 0.75rem; font-weight: 600; cursor: pointer; transition: background 0.2s; }
-        .view-btn:hover { background: #1d4ed8; }
-        .modal { display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0, 0, 0, 0.5); z-index: 10000; padding: 2rem; overflow-y: auto; }
-        .modal.active { display: flex; align-items: center; justify-content: center; }
-        .modal-content { background: white; border-radius: 8px; max-width: 1100px; width: 100%; max-height: 90vh; overflow-y: auto; box-shadow: 0 20px 50px rgba(0,0,0,0.3); }
-        .modal-header { background: #1e293b; color: white; padding: 1.5rem; position: sticky; top: 0; z-index: 10; display: flex; justify-content: space-between; align-items: start; }
-        .modal-header h2 { font-size: 1.5rem; margin-bottom: 0.5rem; }
-        .modal-header p { font-size: 0.875rem; color: #cbd5e1; }
-        .close-btn { background: none; border: none; color: white; font-size: 2rem; cursor: pointer; line-height: 1; padding: 0; width: 32px; height: 32px; }
-        .modal-body { padding: 2rem; }
-        .section { margin-bottom: 2rem; }
-        .section-title { font-size: 1.25rem; font-weight: bold; color: #1e293b; border-bottom: 2px solid #e2e8f0; padding-bottom: 0.5rem; margin-bottom: 1rem; }
-        .data-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 1rem; margin-bottom: 1rem; }
-        .data-item { background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 6px; padding: 1rem; }
-        .data-label { font-size: 0.75rem; color: #64748b; margin-bottom: 0.25rem; }
-        .data-value { font-size: 0.875rem; color: #1e293b; font-weight: 500; }
-        .priority-tag { display: inline-block; padding: 0.25rem 0.75rem; border-radius: 9999px; font-size: 0.875rem; font-weight: 600; border: 1px solid; }
-        .priority-1 { background: #fee2e2; color: #991b1b; border-color: #fca5a5; }
-        .priority-2 { background: #fed7aa; color: #9a3412; border-color: #fdba74; }
-        .priority-3 { background: #fef3c7; color: #854d0e; border-color: #fde047; }
-        .priority-4 { background: #dbeafe; color: #1e40af; border-color: #93c5fd; }
-        .confidence-bar { display: flex; align-items: center; gap: 0.5rem; }
-        .progress-bg { flex: 1; background: #e2e8f0; height: 8px; border-radius: 4px; overflow: hidden; }
-        .progress-fill { background: #16a34a; height: 100%; transition: width 0.3s; }
-        .confidence-value { font-weight: bold; font-size: 0.875rem; }
-        .image-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 1rem; margin-bottom: 1rem; }
-        .image-container { border-radius: 6px; overflow: hidden; }
-        .image-header { padding: 0.5rem; text-align: center; font-size: 0.875rem; font-weight: 600; }
-        .image-header.reference { background: #e2e8f0; color: #1e293b; }
-        .image-header.detection { background: #dc2626; color: white; }
-        .image-content { aspect-ratio: 16/9; background: linear-gradient(135deg, #cbd5e1 0%, #e2e8f0 50%, #94a3b8 100%); position: relative; display: flex; align-items: center; justify-content: center; }
-        .runway-sim { position: absolute; width: 50%; height: 50%; background: #64748b; opacity: 0.5; transform: rotate(15deg); }
-        .detection-box { position: absolute; width: 100px; height: 100px; border: 4px solid #dc2626; background: rgba(220, 38, 38, 0.2); animation: pulse 2s infinite; }
-        .detection-label { position: absolute; top: -28px; left: 0; background: #dc2626; color: white; padding: 0.25rem 0.5rem; border-radius: 4px; font-size: 0.75rem; font-weight: bold; }
-        @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.7; } }
-        .image-overlay { background: rgba(255, 255, 255, 0.9); padding: 0.5rem 1rem; border-radius: 6px; font-size: 0.75rem; text-align: center; }
-        .detection-overlay { background: rgba(220, 38, 38, 0.9); color: white; padding: 0.5rem 1rem; border-radius: 6px; font-size: 0.75rem; font-weight: bold; margin-top: 5rem; }
-        .info-box { background: #dbeafe; border: 1px solid #93c5fd; border-radius: 6px; padding: 1rem; }
-        .info-title { font-weight: 600; color: #1e3a8a; margin-bottom: 0.5rem; display: flex; align-items: center; gap: 0.5rem; }
-        .info-list { font-size: 0.875rem; color: #1e40af; line-height: 1.6; }
-        .feedback-section { background: #f8fafc; border: 2px solid #e2e8f0; border-radius: 8px; padding: 1.5rem; }
-        .button-group { display: flex; gap: 1rem; margin-bottom: 1rem; flex-wrap: wrap; }
-        .btn { flex: 1; min-width: 200px; padding: 0.75rem 1.5rem; border: none; border-radius: 6px; font-weight: 600; cursor: pointer; transition: all 0.2s; }
-        .btn-confirm { background: #16a34a; color: white; }
-        .btn-confirm:hover { background: #15803d; }
-        .btn-reject { background: #dc2626; color: white; }
-        .btn-reject:hover { background: #b91c1c; }
-        .comment-section { border-top: 1px solid #e2e8f0; padding-top: 1rem; margin-top: 1rem; }
-        .comment-label { display: block; font-size: 0.875rem; font-weight: 600; color: #1e293b; margin-bottom: 0.5rem; }
-        textarea { width: 100%; padding: 0.75rem; border: 1px solid #e2e8f0; border-radius: 6px; font-size: 0.875rem; resize: vertical; font-family: inherit; }
-        .btn-submit { background: #2563eb; color: white; padding: 0.5rem 1.5rem; border: none; border-radius: 6px; font-weight: 600; cursor: pointer; margin-top: 0.5rem; }
-        .btn-submit:hover { background: #1d4ed8; }
-        .feedback-success { background: #dcfce7; border: 1px solid #86efac; border-radius: 6px; padding: 1rem; text-align: center; }
-        .feedback-note { background: #f1f5f9; padding: 0.75rem; border-radius: 6px; font-size: 0.75rem; color: #475569; margin-top: 1rem; line-height: 1.5; }
-        @media (max-width: 768px) { .image-grid { grid-template-columns: 1fr; } .data-grid { grid-template-columns: 1fr; } .button-group { flex-direction: column; } .btn { min-width: 100%; } }
-    </style>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>TALON EDDYLINE - Airfield Change Detection System</title>
+
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; height: 100vh; display: flex; flex-direction: column; overflow: hidden; }
+
+    /* Loading Screen */
+    #loading { position: fixed; inset: 0; background: #1e293b; color: white; display: flex; flex-direction: column; align-items: center; justify-content: center; z-index: 99999; }
+    #loading.hidden { display: none; }
+    .spinner { border: 4px solid rgba(255,255,255,0.3); border-radius: 50%; border-top: 4px solid white; width: 50px; height: 50px; animation: spin 1s linear infinite; margin-bottom: 1rem; }
+    @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+
+    .header { background: #1e293b; color: white; padding: 1rem 2rem; box-shadow: 0 2px 8px rgba(0,0,0,0.3); z-index: 1000; }
+    .header-content { display: flex; justify-content: space-between; align-items: center; max-width: 1400px; margin: 0 auto; }
+    .header-left { display: flex; align-items: center; gap: 1rem; }
+    .logo-badge { background: #dc2626; padding: 0.25rem 0.75rem; border-radius: 4px; font-weight: bold; font-size: 0.875rem; }
+    .title { font-size: 1.5rem; font-weight: bold; }
+    .subtitle { color: #cbd5e1; font-size: 0.875rem; }
+    .classification { font-size: 0.75rem; color: #94a3b8; }
+
+    #map { flex: 1; position: relative; background: #334155; }
+
+    .legend { position: absolute; bottom: 20px; left: 20px; background: white; padding: 1rem; border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.2); z-index: 1000; max-width: 280px; }
+    .legend h4 { font-size: 0.875rem; font-weight: bold; margin-bottom: 0.75rem; color: #1e293b; }
+    .legend-item { display: flex; align-items: center; gap: 0.5rem; font-size: 0.75rem; margin-bottom: 0.5rem; }
+    .legend-color { width: 12px; height: 12px; border-radius: 2px; }
+    .legend-info { margin-top: 0.75rem; padding-top: 0.75rem; border-top: 1px solid #e2e8f0; font-size: 0.75rem; color: #64748b; }
+
+    /* Leaflet popup styling (works once leaflet CSS loads) */
+    .leaflet-popup-content-wrapper { border-radius: 8px; padding: 0; overflow: hidden; }
+    .leaflet-popup-content { margin: 0; width: 380px !important; }
+
+    .popup-container { padding: 1rem; }
+    .popup-title { font-size: 1.125rem; font-weight: bold; color: #1e293b; margin-bottom: 0.5rem; }
+    .popup-subtitle { font-size: 0.875rem; color: #64748b; margin-bottom: 1rem; }
+
+    .detection-card { border: 1px solid #e2e8f0; border-radius: 6px; padding: 0.75rem; margin-bottom: 0.5rem; cursor: pointer; transition: all 0.2s; }
+    .detection-card:hover { background: #f8fafc; border-color: #cbd5e1; }
+    .detection-header { display: flex; justify-content: space-between; align-items: start; margin-bottom: 0.5rem; }
+    .detection-type { font-size: 0.875rem; font-weight: 600; color: #1e293b; }
+    .priority-badge { background: #e2e8f0; padding: 0.125rem 0.5rem; border-radius: 4px; font-size: 0.75rem; font-weight: 600; }
+    .detection-desc { font-size: 0.75rem; color: #64748b; margin-bottom: 0.5rem; line-height: 1.4; }
+    .detection-footer { display: flex; justify-content: space-between; align-items: center; font-size: 0.75rem; }
+    .confidence { color: #64748b; }
+    .view-btn { background: #2563eb; color: white; border: none; padding: 0.25rem 0.75rem; border-radius: 4px; font-size: 0.75rem; font-weight: 600; cursor: pointer; transition: background 0.2s; }
+    .view-btn:hover { background: #1d4ed8; }
+
+    .modal { display: none; position: fixed; inset: 0; background: rgba(0, 0, 0, 0.5); z-index: 10000; padding: 2rem; overflow-y: auto; }
+    .modal.active { display: flex; align-items: center; justify-content: center; }
+
+    .modal-content { background: white; border-radius: 8px; max-width: 1100px; width: 100%; max-height: 90vh; overflow-y: auto; box-shadow: 0 20px 50px rgba(0,0,0,0.3); }
+    .modal-header { background: #1e293b; color: white; padding: 1.5rem; position: sticky; top: 0; z-index: 10; display: flex; justify-content: space-between; align-items: start; gap: 1rem; }
+    .modal-header h2 { font-size: 1.5rem; margin-bottom: 0.5rem; }
+    .modal-header p { font-size: 0.875rem; color: #cbd5e1; }
+    .close-btn { background: none; border: none; color: white; font-size: 2rem; cursor: pointer; line-height: 1; padding: 0; width: 32px; height: 32px; }
+
+    .modal-body { padding: 2rem; }
+    .section { margin-bottom: 2rem; }
+    .section-title { font-size: 1.25rem; font-weight: bold; color: #1e293b; border-bottom: 2px solid #e2e8f0; padding-bottom: 0.5rem; margin-bottom: 1rem; }
+
+    .data-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 1rem; margin-bottom: 1rem; }
+    .data-item { background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 6px; padding: 1rem; }
+    .data-label { font-size: 0.75rem; color: #64748b; margin-bottom: 0.25rem; }
+    .data-value { font-size: 0.875rem; color: #1e293b; font-weight: 500; }
+
+    .priority-tag { display: inline-block; padding: 0.25rem 0.75rem; border-radius: 9999px; font-size: 0.875rem; font-weight: 600; border: 1px solid; }
+    .priority-1 { background: #fee2e2; color: #991b1b; border-color: #fca5a5; }
+    .priority-2 { background: #fed7aa; color: #9a3412; border-color: #fdba74; }
+    .priority-3 { background: #fef3c7; color: #854d0e; border-color: #fde047; }
+    .priority-4 { background: #dbeafe; color: #1e40af; border-color: #93c5fd; }
+
+    .confidence-bar { display: flex; align-items: center; gap: 0.5rem; }
+    .progress-bg { flex: 1; background: #e2e8f0; height: 8px; border-radius: 4px; overflow: hidden; }
+    .progress-fill { background: #16a34a; height: 100%; transition: width 0.3s; }
+    .confidence-value { font-weight: bold; font-size: 0.875rem; }
+
+    .image-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 1rem; margin-bottom: 1rem; }
+    .image-container { border-radius: 6px; overflow: hidden; }
+    .image-header { padding: 0.5rem; text-align: center; font-size: 0.875rem; font-weight: 600; }
+    .image-header.reference { background: #e2e8f0; color: #1e293b; }
+    .image-header.detection { background: #dc2626; color: white; }
+    .image-content { aspect-ratio: 16/9; background: linear-gradient(135deg, #cbd5e1 0%, #e2e8f0 50%, #94a3b8 100%); position: relative; display: flex; align-items: center; justify-content: center; }
+    .runway-sim { position: absolute; width: 50%; height: 50%; background: #64748b; opacity: 0.5; transform: rotate(15deg); }
+    .detection-box { position: absolute; width: 100px; height: 100px; border: 4px solid #dc2626; background: rgba(220, 38, 38, 0.2); animation: pulse 2s infinite; top: 35%; left: 45%; transform: translate(-50%, -50%); }
+    .detection-label { position: absolute; top: -28px; left: 0; background: #dc2626; color: white; padding: 0.25rem 0.5rem; border-radius: 4px; font-size: 0.75rem; font-weight: bold; white-space: nowrap; }
+    @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.7; } }
+    .image-overlay { background: rgba(255, 255, 255, 0.9); padding: 0.5rem 1rem; border-radius: 6px; font-size: 0.75rem; text-align: center; }
+    .detection-overlay { background: rgba(220, 38, 38, 0.9); color: white; padding: 0.5rem 1rem; border-radius: 6px; font-size: 0.75rem; font-weight: bold; margin-top: 5rem; text-align: center; }
+
+    .info-box { background: #dbeafe; border: 1px solid #93c5fd; border-radius: 6px; padding: 1rem; }
+    .info-title { font-weight: 600; color: #1e3a8a; margin-bottom: 0.5rem; display: flex; align-items: center; gap: 0.5rem; }
+    .info-list { font-size: 0.875rem; color: #1e40af; line-height: 1.6; }
+
+    .feedback-section { background: #f8fafc; border: 2px solid #e2e8f0; border-radius: 8px; padding: 1.5rem; }
+    .button-group { display: flex; gap: 1rem; margin-bottom: 1rem; flex-wrap: wrap; }
+    .btn { flex: 1; min-width: 200px; padding: 0.75rem 1.5rem; border: none; border-radius: 6px; font-weight: 600; cursor: pointer; transition: all 0.2s; }
+    .btn-confirm { background: #16a34a; color: white; }
+    .btn-confirm:hover { background: #15803d; }
+    .btn-reject { background: #dc2626; color: white; }
+    .btn-reject:hover { background: #b91c1c; }
+
+    .comment-section { border-top: 1px solid #e2e8f0; padding-top: 1rem; margin-top: 1rem; }
+    .comment-label { display: block; font-size: 0.875rem; font-weight: 600; color: #1e293b; margin-bottom: 0.5rem; }
+
+    textarea { width: 100%; padding: 0.75rem; border: 1px solid #e2e8f0; border-radius: 6px; font-size: 0.875rem; resize: vertical; font-family: inherit; }
+
+    .btn-submit { background: #2563eb; color: white; padding: 0.5rem 1.5rem; border: none; border-radius: 6px; font-weight: 600; cursor: pointer; margin-top: 0.5rem; }
+    .btn-submit:hover { background: #1d4ed8; }
+
+    .feedback-success { background: #dcfce7; border: 1px solid #86efac; border-radius: 6px; padding: 1rem; text-align: center; }
+    .feedback-note { background: #f1f5f9; padding: 0.75rem; border-radius: 6px; font-size: 0.75rem; color: #475569; margin-top: 1rem; line-height: 1.5; }
+
+    .inline-input { width: 100%; padding: 0.6rem 0.75rem; border: 1px solid #e2e8f0; border-radius: 6px; font-size: 0.875rem; font-family: inherit; background: white; }
+    .small-muted { font-size: 0.75rem; color: #64748b; margin-top: 0.35rem; line-height: 1.4; }
+
+    .retention-badge { display: inline-flex; align-items: center; gap: 0.5rem; padding: 0.35rem 0.6rem; border-radius: 9999px; border: 1px solid #cbd5e1; background: #f8fafc; font-size: 0.75rem; color: #334155; }
+
+    pre.json {
+      background: #0b1220;
+      color: #e5e7eb;
+      padding: 1rem;
+      border-radius: 8px;
+      overflow-x: auto;
+      font-size: 0.8rem;
+      line-height: 1.5;
+      border: 1px solid #1f2937;
+    }
+
+    @media (max-width: 768px) {
+      .image-grid { grid-template-columns: 1fr; }
+      .data-grid { grid-template-columns: 1fr; }
+      .button-group { flex-direction: column; }
+      .btn { min-width: 100%; }
+      .modal { padding: 1rem; }
+      .modal-body { padding: 1.25rem; }
+    }
+  </style>
 </head>
+
 <body>
-    <div class="header">
-        <div class="header-content">
-            <div class="header-left">
-                <div class="logo-badge">TALON</div>
-                <h1 class="title">EDDYLINE</h1>
-                <span class="subtitle">Airfield Change Detection System</span>
-            </div>
-            <div class="header-right">
-                <p style="font-size: 0.875rem; color: #cbd5e1;">MVP Demonstration</p>
-                <p class="classification">UNCLASSIFIED // FOR OFFICIAL USE ONLY</p>
-            </div>
-        </div>
+  <!-- Loading Screen -->
+  <div id="loading">
+    <div class="spinner"></div>
+    <p style="font-size: 1.125rem; font-weight: 600;">Loading TALON EDDYLINE...</p>
+    <p style="font-size: 0.875rem; color: #94a3b8; margin-top: 0.5rem;">Initializing map and detection data</p>
+    <p id="loading-status" style="font-size: 0.75rem; color: #94a3b8; margin-top: 0.75rem;"></p>
+  </div>
+
+  <div class="header">
+    <div class="header-content">
+      <div class="header-left">
+        <div class="logo-badge">TALON</div>
+        <h1 class="title">EDDYLINE</h1>
+        <span class="subtitle">Airfield Change Detection System</span>
+      </div>
+      <div class="header-right">
+        <p style="font-size: 0.875rem; color: #cbd5e1;">MVP Demonstration</p>
+        <p class="classification">UNCLASSIFIED // FOR OFFICIAL USE ONLY</p>
+      </div>
     </div>
-    <div id="map"></div>
-    <div class="legend">
-        <h4>Detection Priorities</h4>
-        <div class="legend-item"><div class="legend-color" style="background: #dc2626;"></div><span>Priority 1: Vegetation Encroachment</span></div>
-        <div class="legend-item"><div class="legend-color" style="background: #ea580c;"></div><span>Priority 2: Vertical Obstructions</span></div>
-        <div class="legend-item"><div class="legend-color" style="background: #ca8a04;"></div><span>Priority 3: Pavement Damage</span></div>
-        <div class="legend-item"><div class="legend-color" style="background: #2563eb;"></div><span>Priority 4: Structure Damage</span></div>
-        <div class="legend-info">
-            <p><strong>ICAO:</strong> KCOS</p>
-            <p><strong>Location:</strong> Colorado Springs, CO</p>
-            <p><strong>Last Update:</strong> <span id="current-date"></span></p>
-        </div>
+  </div>
+
+  <div id="map"></div>
+
+  <div class="legend">
+    <h4>Detection Priorities</h4>
+    <div class="legend-item"><div class="legend-color" style="background: #dc2626;"></div><span>Priority 1: Vegetation Encroachment</span></div>
+    <div class="legend-item"><div class="legend-color" style="background: #ea580c;"></div><span>Priority 2: Vertical Obstructions</span></div>
+    <div class="legend-item"><div class="legend-color" style="background: #ca8a04;"></div><span>Priority 3: Pavement Damage</span></div>
+    <div class="legend-item"><div class="legend-color" style="background: #2563eb;"></div><span>Priority 4: Structure Damage</span></div>
+    <div class="legend-info">
+      <p><strong>ICAO:</strong> KCOS</p>
+      <p><strong>Location:</strong> Colorado Springs, CO</p>
+      <p><strong>Last Update:</strong> <span id="current-date"></span></p>
     </div>
-    <div id="modal" class="modal">
-        <div class="modal-content">
-            <div class="modal-header">
-                <div><h2>Detection Detail</h2><p id="modal-subtitle"></p></div>
-                <button class="close-btn" onclick="closeModal()">&times;</button>
+  </div>
+
+  <div id="modal" class="modal">
+    <div class="modal-content">
+      <div class="modal-header">
+        <div>
+          <h2>Detection Detail</h2>
+          <p id="modal-subtitle"></p>
+        </div>
+        <button class="close-btn" onclick="closeModal()">&times;</button>
+      </div>
+      <div class="modal-body" id="modal-body"></div>
+    </div>
+  </div>
+
+  <script>
+    // ----------------------------
+    // BULLETPROOF LEAFLET LOADING
+    // ----------------------------
+    const LEAFLET_CSS_URLS = [
+      "https://unpkg.com/leaflet@1.9.4/dist/leaflet.css",
+      "https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.css",
+      "https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.css"
+    ];
+
+    const LEAFLET_JS_URLS = [
+      "https://unpkg.com/leaflet@1.9.4/dist/leaflet.js",
+      "https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.js",
+      "https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.js"
+    ];
+
+    function setLoadingStatus(msg) {
+      const el = document.getElementById("loading-status");
+      if (el) el.textContent = msg;
+    }
+
+    function loadCssSequential(urls) {
+      return new Promise((resolve, reject) => {
+        let i = 0;
+
+        const tryNext = () => {
+          if (i >= urls.length) return reject(new Error("Leaflet CSS failed to load from all CDNs."));
+          const url = urls[i++];
+          setLoadingStatus(`Loading Leaflet CSS… (${i}/${urls.length})`);
+
+          const link = document.createElement("link");
+          link.rel = "stylesheet";
+          link.href = url;
+
+          link.onload = () => resolve(url);
+          link.onerror = () => tryNext();
+
+          document.head.appendChild(link);
+        };
+
+        tryNext();
+      });
+    }
+
+    function loadJsSequential(urls) {
+      return new Promise((resolve, reject) => {
+        let i = 0;
+
+        const tryNext = () => {
+          if (i >= urls.length) return reject(new Error("Leaflet JS failed to load from all CDNs."));
+          const url = urls[i++];
+          setLoadingStatus(`Loading Leaflet JS… (${i}/${urls.length})`);
+
+          const script = document.createElement("script");
+          script.src = url;
+          script.async = true;
+
+          script.onload = () => resolve(url);
+          script.onerror = () => tryNext();
+
+          document.head.appendChild(script);
+        };
+
+        tryNext();
+      });
+    }
+
+    async function loadLeaflet() {
+      if (typeof window.L !== "undefined") return;
+      await loadCssSequential(LEAFLET_CSS_URLS);
+      await loadJsSequential(LEAFLET_JS_URLS);
+
+      if (typeof window.L === "undefined") {
+        throw new Error("Leaflet loaded but window.L is undefined.");
+      }
+    }
+
+    // ----------------------------
+    // DATA (mock; matches your MVP story)
+    // ----------------------------
+    const detections = [
+      {
+        id: 1,
+        type: "Vegetation Encroachment",
+        typeShort: "Vegetation Encroachment",
+        icao: "KCOS",
+        timestamp: "2025-01-30T14:23:15Z",
+        coordinates: { lat: 38.8052, lon: -104.7006 },
+        confidence: 0.89,
+        sourceImageTimestamp: "2025-01-30T10:15:00Z",
+        estimatedHeight: "0.8m",
+        status: "Active",
+        priority: 1,
+        description: "Vegetation detected along runway 35L edge, eastern boundary"
+      },
+      {
+        id: 2,
+        type: "Vertical Obstruction",
+        typeShort: "Vertical Obstruction",
+        icao: "KCOS",
+        timestamp: "2025-01-29T09:45:32Z",
+        coordinates: { lat: 38.8038, lon: -104.7012 },
+        confidence: 0.92,
+        sourceImageTimestamp: "2025-01-29T08:30:00Z",
+        estimatedHeight: "2.3m",
+        status: "Active",
+        priority: 2,
+        description: "Equipment detected in approach clear zone, runway 17R"
+      },
+      {
+        id: 3,
+        type: "Pavement Damage",
+        typeShort: "Pavement Damage",
+        icao: "KCOS",
+        timestamp: "2025-01-28T16:12:08Z",
+        coordinates: { lat: 38.8045, lon: -104.7008 },
+        confidence: 0.78,
+        sourceImageTimestamp: "2025-01-28T14:00:00Z",
+        estimatedHeight: null,
+        status: "Active",
+        priority: 3,
+        description: "Surface cracking detected on taxiway Charlie, near intersection with runway 35L"
+      },
+      {
+        id: 4,
+        type: "Building, Threat Systems, and Airfield Structure Changes Detection",
+        typeShort: "Structure Damage",
+        icao: "KCOS",
+        timestamp: "2025-01-27T11:33:45Z",
+        coordinates: { lat: 38.8048, lon: -104.7015 },
+        confidence: 0.85,
+        sourceImageTimestamp: "2025-01-27T09:45:00Z",
+        estimatedHeight: null,
+        status: "Active",
+        priority: 4,
+        description: "Roof damage detected on Hangar 3, northwest quadrant"
+      }
+    ];
+
+    // ----------------------------
+    // MAP + UI
+    // ----------------------------
+    let mapInstance = null;
+
+    function priorityColor(priority) {
+      if (priority === 1) return "#dc2626";
+      if (priority === 2) return "#ea580c";
+      if (priority === 3) return "#ca8a04";
+      return "#2563eb";
+    }
+
+    function createClusterIcon(count) {
+      return L.divIcon({
+        className: "custom-marker",
+        html: `
+          <div style="position: relative;">
+            <svg width="35" height="45" viewBox="0 0 35 45" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+              <path d="M17.5 0C7.835 0 0 7.835 0 17.5C0 30.625 17.5 45 17.5 45C17.5 45 35 30.625 35 17.5C35 7.835 27.165 0 17.5 0Z" fill="#DC2626"/>
+              <circle cx="17.5" cy="17.5" r="8" fill="white"/>
+            </svg>
+            <div style="
+              position: absolute; top: 9px; left: 50%; transform: translateX(-50%);
+              background: #DC2626; color: white; border-radius: 50%;
+              width: 20px; height: 20px; display: flex; align-items: center; justify-content: center;
+              font-size: 12px; font-weight: bold; border: 2px solid white;">
+              ${count}
             </div>
-            <div class="modal-body" id="modal-body"></div>
-        </div>
-    </div>
-    <script>
-        const detections = [
-            { id: 1, type: 'Vegetation Encroachment', icao: 'KCOS', timestamp: '2025-01-30T14:23:15Z', coordinates: { lat: 38.8052, lon: -104.7006 }, confidence: 0.89, sourceImageTimestamp: '2025-01-30T10:15:00Z', estimatedHeight: '0.8m', status: 'Active', priority: 1, description: 'Vegetation detected along runway 35L edge, eastern boundary' },
-            { id: 2, type: 'Vertical Obstruction', icao: 'KCOS', timestamp: '2025-01-29T09:45:32Z', coordinates: { lat: 38.8038, lon: -104.7012 }, confidence: 0.92, sourceImageTimestamp: '2025-01-29T08:30:00Z', estimatedHeight: '2.3m', status: 'Active', priority: 2, description: 'Equipment detected in approach clear zone, runway 17R' },
-            { id: 3, type: 'Pavement Damage', icao: 'KCOS', timestamp: '2025-01-28T16:12:08Z', coordinates: { lat: 38.8045, lon: -104.7008 }, confidence: 0.78, sourceImageTimestamp: '2025-01-28T14:00:00Z', estimatedHeight: null, status: 'Active', priority: 3, description: 'Surface cracking detected on taxiway Charlie, near intersection with runway 35L' },
-            { id: 4, type: 'Building, Threat Systems, and Airfield Structure Changes', icao: 'KCOS', timestamp: '2025-01-27T11:33:45Z', coordinates: { lat: 38.8048, lon: -104.7015 }, confidence: 0.85, sourceImageTimestamp: '2025-01-27T09:45:00Z', estimatedHeight: null, status: 'Active', priority: 4, description: 'Roof damage detected on Hangar 3, northwest quadrant' }
-        ];
-        const map = L.map('map').setView([38.8048, -104.7010], 14);
-        L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', { attribution: '&copy; Esri', maxZoom: 18 }).addTo(map);
-        const customIcon = L.divIcon({ className: 'custom-marker', html: `<div style="position: relative;"><svg width="35" height="45" viewBox="0 0 35 45" xmlns="http://www.w3.org/2000/svg"><path d="M17.5 0C7.835 0 0 7.835 0 17.5C0 30.625 17.5 45 17.5 45C17.5 45 35 30.625 35 17.5C35 7.835 27.165 0 17.5 0Z" fill="#DC2626"/><circle cx="17.5" cy="17.5" r="8" fill="white"/></svg><div style="position: absolute; top: 9px; left: 50%; transform: translateX(-50%); background: #DC2626; color: white; border-radius: 50%; width: 20px; height: 20px; display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: bold; border: 2px solid white;">4</div></div>`, iconSize: [35, 45], iconAnchor: [17.5, 45], popupAnchor: [0, -45] });
-        const popupContent = `<div class="popup-container"><h3 class="popup-title">Colorado Springs Airport (KCOS)</h3><p class="popup-subtitle">${detections.length} Active Detections</p><div style="max-height: 300px; overflow-y: auto;">${detections.map(d => `<div class="detection-card" onclick="openModal(${d.id})"><div class="detection-header"><span class="detection-type">${d.type}</span><span class="priority-badge">P${d.priority}</span></div><p class="detection-desc">${d.description}</p><div class="detection-footer"><span class="confidence">Confidence: ${(d.confidence * 100).toFixed(0)}%</span><button class="view-btn" onclick="event.stopPropagation(); openModal(${d.id})">View Details →</button></div></div>`).join('')}</div></div>`;
-        L.marker([38.8048, -104.7010], { icon: customIcon }).addTo(map).bindPopup(popupContent, { maxWidth: 400 });
-        document.getElementById('current-date').textContent = new Date().toISOString().split('T')[0];
-        let feedbackSubmitted = false;
-        function openModal(detectionId) {
-            const detection = detections.find(d => d.id === detectionId);
-            if (!detection) return;
-            const priorityClasses = { 1: 'priority-1', 2: 'priority-2', 3: 'priority-3', 4: 'priority-4' };
-            document.getElementById('modal-subtitle').textContent = `ICAO: ${detection.icao} | Detection ID: ${detection.id}`;
-            document.getElementById('modal-body').innerHTML = `
-                <div class="section">
-                    <h3 class="section-title">Detection Alert Data (Req 2)</h3>
-                    <div class="data-grid">
-                        <div class="data-item"><div class="data-label">Detection Type</div><div class="data-value"><span class="priority-tag ${priorityClasses[detection.priority]}">Priority ${detection.priority}: ${detection.type}</span></div></div>
-                        <div class="data-item"><div class="data-label">Detection Timestamp</div><div class="data-value" style="font-family: monospace;">${detection.timestamp}</div></div>
-                        <div class="data-item"><div class="data-label">Geographic Coordinates (WGS84)</div><div class="data-value" style="font-family: monospace;">${detection.coordinates.lat.toFixed(6)}, ${detection.coordinates.lon.toFixed(6)}</div></div>
-                        <div class="data-item"><div class="data-label">Model Confidence Score</div><div class="confidence-bar"><div class="progress-bg"><div class="progress-fill" style="width: ${detection.confidence * 100}%"></div></div><span class="confidence-value">${(detection.confidence * 100).toFixed(1)}%</span></div></div>
-                        <div class="data-item"><div class="data-label">Source Image Timestamp</div><div class="data-value" style="font-family: monospace;">${detection.sourceImageTimestamp}</div></div>
-                        ${detection.estimatedHeight ? `<div class="data-item"><div class="data-label">Estimated Height</div><div class="data-value" style="font-weight: bold; font-size: 1.125rem;">${detection.estimatedHeight}</div></div>` : ''}
-                    </div>
-                    <div class="data-item" style="margin-top: 1rem;"><div class="data-label">Description</div><div class="data-value">${detection.description}</div></div>
+          </div>`,
+        iconSize: [35, 45],
+        iconAnchor: [17.5, 45],
+        popupAnchor: [0, -45]
+      });
+    }
+
+    function initializeMap() {
+      const cosPosition = [38.8048, -104.7010];
+
+      mapInstance = L.map("map", { zoomControl: true }).setView(cosPosition, 14);
+
+      // Esri World Imagery (your earlier MVP intent)
+      L.tileLayer("https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}", {
+        attribution: "&copy; Esri",
+        maxZoom: 18
+      }).addTo(mapInstance);
+
+      // Single marker for KCOS with "count badge" (simple MVP)
+      const customIcon = createClusterIcon(detections.length);
+
+      const popupContent = `
+        <div class="popup-container">
+          <h3 class="popup-title">Colorado Springs Airport (KCOS)</h3>
+          <p class="popup-subtitle">${detections.length} Active Detection${detections.length !== 1 ? "s" : ""}</p>
+
+          <div style="max-height: 300px; overflow-y: auto;">
+            ${detections.map(d => `
+              <div class="detection-card" onclick="openModal(${d.id})" role="button" tabindex="0">
+                <div class="detection-header">
+                  <span class="detection-type">${escapeHtml(d.typeShort)}</span>
+                  <span class="priority-badge">P${d.priority}</span>
                 </div>
-                <div class="section">
-                    <h3 class="section-title">Detection Alert Imagery (Req 3)</h3>
-                    <div class="image-grid">
-                        <div class="image-container" style="border: 2px solid #e2e8f0;"><div class="image-header reference">Reference Image (Before)</div><div class="image-content"><div class="runway-sim"></div><div class="image-overlay"><p style="color: #64748b;">Clean airfield imagery</p><p style="font-family: monospace; color: #94a3b8; font-size: 0.7rem;">${detection.sourceImageTimestamp}</p></div></div></div>
-                        <div class="image-container" style="border: 2px solid #dc2626;"><div class="image-header detection">Detection Image (Current)</div><div class="image-content"><div class="runway-sim"></div><div class="detection-box"><div class="detection-label">${detection.type.split(' ')[0]}</div></div><div class="detection-overlay"><p>⚠ DETECTION ALERT</p><p style="font-family: monospace; font-size: 0.7rem;">${detection.timestamp}</p></div></div></div>
-                    </div>
-                    <div class="info-box"><div class="info-title"><svg style="width: 20px; height: 20px;" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clip-rule="evenodd" /></svg>Visual Context & Detection Cues</div><div class="info-list">• Red bounding box indicates detected change area within airfield scene<br>• Detection location correlates to ${detection.description.toLowerCase()}<br>• Reference imagery provides baseline for comparison and validation<br>• Detection coordinates: ${detection.coordinates.lat.toFixed(6)}, ${detection.coordinates.lon.toFixed(6)}</div></div>
+                <p class="detection-desc">${escapeHtml(d.description)}</p>
+                <div class="detection-footer">
+                  <span class="confidence">Confidence: ${(d.confidence * 100).toFixed(0)}%</span>
+                  <button class="view-btn" onclick="event.stopPropagation(); openModal(${d.id})">View Details →</button>
                 </div>
-                <div class="feedback-section"><h3 class="section-title">Analyst Feedback Interface (Req 2.9 & 3 Objective)</h3><div id="feedback-content">${!feedbackSubmitted ? `<div class="button-group"><button class="btn btn-confirm" onclick="submitFeedback('Confirmed Valid')">✓ Confirm Valid</button><button class="btn btn-reject" onclick="submitFeedback('Rejected as False Positive')">✗ Reject (False Positive)</button></div><div class="comment-section"><label class="comment-label">Add Comments / Annotations:</label><textarea id="feedback-comment" rows="3" placeholder="Enter any additional comments or corrections for this detection..."></textarea><button class="btn-submit" onclick="submitComment()">Submit Comment</button></div><div class="feedback-note"><p style="font-weight: 600; margin-bottom: 0.25rem;">Feedback Logging (Req 2.9):</p><p>• All analyst actions are logged with analyst identifier and timestamp<br>• Validated feedback automatically incorporated into model retraining workflows<br>• Supports continuous model improvement and false positive reduction</p></div>` : '<div class="feedback-success"><p style="color: #166534; font-weight: 600; font-size: 1rem;">✓ Feedback Submitted Successfully</p><p style="color: #16a34a; font-size: 0.875rem; margin-top: 0.5rem;">Data logged for model retraining</p></div>'}</div></div>
-            `;
-            document.getElementById('modal').classList.add('active');
-            feedbackSubmitted = false;
-        }
-        function closeModal() { document.getElementById('modal').classList.remove('active'); }
-        function submitFeedback(action) { feedbackSubmitted = true; document.getElementById('feedback-content').innerHTML = `<div class="feedback-success"><p style="color: #166534; font-weight: 600; font-size: 1rem;">✓ ${action}</p><p style="color: #16a34a; font-size: 0.875rem; margin-top: 0.5rem;">Data logged for model retraining</p></div>`; setTimeout(() => { feedbackSubmitted = false; }, 3000); }
-        function submitComment() { const comment = document.getElementById('feedback-comment').value; if (comment.trim()) { submitFeedback('Comment Added: "' + comment.substring(0, 50) + '..."'); } else { alert('Please enter a comment before submitting.'); } }
-        document.getElementById('modal').addEventListener('click', function(e) { if (e.target === this) closeModal(); });
-    </script>
+              </div>
+            `).join("")}
+          </div>
+        </div>
+      `;
+
+      L.marker(cosPosition, { icon: customIcon })
+        .addTo(mapInstance)
+        .bindPopup(popupContent, { maxWidth: 420 });
+
+      document.getElementById("current-date").textContent = new Date().toISOString().split("T")[0];
+      document.getElementById("loading").classList.add("hidden");
+    }
+
+    // ----------------------------
+    // MODAL + FEEDBACK (Req 2.9 / Req 3 objective)
+    // ----------------------------
+    let activeDetectionId = null;
+
+    function buildAlertJson(detection, analystId, action, comment) {
+      // This is a "shape" that mirrors Req 2 fields + feedback logging.
+      // In the real system, this is what SAIC would post/store.
+      const payload = {
+        icao: detection.icao,
+        detection_id: detection.id,
+        detection_type: detection.type, // full label
+        detection_timestamp_iso8601: detection.timestamp,
+        coordinates_wgs84: {
+          lat: detection.coordinates.lat,
+          lon: detection.coordinates.lon
+        },
+        source_image_timestamp_iso8601: detection.sourceImageTimestamp,
+        model_confidence_0_to_1: detection.confidence,
+        link_to_alert_imagery: "https://example.placeholder/alert-imagery/" + detection.id, // MVP placeholder
+        optional_estimated_height: detection.estimatedHeight || null,
+        analyst_feedback: action ? {
+          analyst_identifier: analystId || "UNSPECIFIED",
+          action_taken: action,
+          free_text_comment: comment || null,
+          feedback_timestamp_iso8601: new Date().toISOString()
+        } : null
+      };
+
+      return payload;
+    }
+
+    function openModal(detectionId) {
+      const detection = detections.find(d => d.id === detectionId);
+      if (!detection) return;
+
+      activeDetectionId = detectionId;
+
+      const priorityClasses = { 1: "priority-1", 2: "priority-2", 3: "priority-3", 4: "priority-4" };
+      document.getElementById("modal-subtitle").textContent = `ICAO: ${detection.icao} | Detection ID: ${detection.id}`;
+
+      const initialJson = buildAlertJson(detection, "", null, null);
+
+      document.getElementById("modal-body").innerHTML = `
+        <div class="section">
+          <h3 class="section-title">Detection Alert Data (Req 2)</h3>
+
+          <div style="display:flex; justify-content: space-between; align-items: center; gap: 1rem; flex-wrap: wrap; margin-bottom: 1rem;">
+            <div class="retention-badge" title="Req 7: retain 3 most recent + highest confidence for identical detections">
+              ⏳ Retention: last 3 + highest confidence
+            </div>
+            <div class="retention-badge" title="MVP placeholder: delivery logging shown in feedback action">
+              ✅ Delivery logging: enabled (MVP)
+            </div>
+          </div>
+
+          <div class="data-grid">
+            <div class="data-item">
+              <div class="data-label">Detection Type</div>
+              <div class="data-value">
+                <span class="priority-tag ${priorityClasses[detection.priority]}">Priority ${detection.priority}: ${escapeHtml(detection.typeShort)}</span>
+              </div>
+              <div class="small-muted">Full category label: ${escapeHtml(detection.type)}</div>
+            </div>
+
+            <div class="data-item">
+              <div class="data-label">Detection Timestamp (ISO 8601)</div>
+              <div class="data-value" style="font-family: monospace;">${escapeHtml(detection.timestamp)}</div>
+            </div>
+
+            <div class="data-item">
+              <div class="data-label">Geographic Coordinates (WGS84)</div>
+              <div class="data-value" style="font-family: monospace;">${detection.coordinates.lat.toFixed(6)}, ${detection.coordinates.lon.toFixed(6)}</div>
+            </div>
+
+            <div class="data-item">
+              <div class="data-label">Model Confidence Score (0.0 to 1.0)</div>
+              <div class="confidence-bar">
+                <div class="progress-bg"><div class="progress-fill" style="width: ${detection.confidence * 100}%"></div></div>
+                <span class="confidence-value">${(detection.confidence).toFixed(2)}</span>
+              </div>
+              <div class="small-muted">Displayed as ${(detection.confidence * 100).toFixed(1)}%</div>
+            </div>
+
+            <div class="data-item">
+              <div class="data-label">Source Image Timestamp</div>
+              <div class="data-value" style="font-family: monospace;">${escapeHtml(detection.sourceImageTimestamp)}</div>
+            </div>
+
+            ${detection.estimatedHeight ? `
+              <div class="data-item">
+                <div class="data-label">Estimated Height (Objective)</div>
+                <div class="data-value" style="font-weight: bold; font-size: 1.125rem;">${escapeHtml(detection.estimatedHeight)}</div>
+              </div>
+            ` : ""}
+          </div>
+
+          <div class="data-item" style="margin-top: 1rem;">
+            <div class="data-label">Description</div>
+            <div class="data-value">${escapeHtml(detection.description)}</div>
+          </div>
+
+          <div style="margin-top: 1rem;">
+            <div class="data-label" style="margin-bottom: 0.5rem;">Alert Data JSON (what AMC.Maps would ingest)</div>
+            <pre class="json" id="alert-json">${escapeHtml(JSON.stringify(initialJson, null, 2))}</pre>
+          </div>
+        </div>
+
+        <div class="section">
+          <h3 class="section-title">Detection Alert Imagery (Req 3)</h3>
+
+          <div class="image-grid">
+            <div class="image-container" style="border: 2px solid #e2e8f0;">
+              <div class="image-header reference">Reference Image (Before)</div>
+              <div class="image-content">
+                <div class="runway-sim"></div>
+                <div class="image-overlay">
+                  <p style="color: #64748b;">Baseline context imagery</p>
+                  <p style="font-family: monospace; color: #94a3b8; font-size: 0.7rem;">${escapeHtml(detection.sourceImageTimestamp)}</p>
+                </div>
+              </div>
+            </div>
+
+            <div class="image-container" style="border: 2px solid ${priorityColor(detection.priority)};">
+              <div class="image-header detection" style="background: ${priorityColor(detection.priority)};">Detection Image (Current)</div>
+              <div class="image-content">
+                <div class="runway-sim"></div>
+                <div class="detection-box" style="border-color:${priorityColor(detection.priority)}; background: rgba(220,38,38,0.2);">
+                  <div class="detection-label" style="background:${priorityColor(detection.priority)};">${escapeHtml(detection.typeShort)}</div>
+                </div>
+                <div class="detection-overlay" style="background: rgba(220,38,38,0.9);">
+                  <p>⚠ DETECTION ALERT</p>
+                  <p style="font-family: monospace; font-size: 0.7rem;">${escapeHtml(detection.timestamp)}</p>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="info-box">
+            <div class="info-title">
+              <svg style="width: 20px; height: 20px;" fill="currentColor" viewBox="0 0 20 20" aria-hidden="true">
+                <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clip-rule="evenodd" />
+              </svg>
+              Visual Context & Detection Cues
+            </div>
+            <div class="info-list">
+              • Visual cue indicates detected change area within the scene<br>
+              • Analyst can correlate the cue to the written description and coordinates<br>
+              • Reference imagery provides baseline for comparison and adjudication<br>
+              • Coordinates (WGS84): ${detection.coordinates.lat.toFixed(6)}, ${detection.coordinates.lon.toFixed(6)}
+            </div>
+          </div>
+        </div>
+
+        <div class="feedback-section">
+          <h3 class="section-title">Analyst Feedback Interface (Req 2 Objective & Req 3 Objective)</h3>
+
+          <div class="data-grid" style="margin-bottom: 1rem;">
+            <div class="data-item">
+              <div class="data-label">Analyst Identifier (required for logging)</div>
+              <input id="analyst-id" class="inline-input" placeholder="e.g., jsmith / AMC_A4_analyst_03" />
+              <div class="small-muted">This MVP writes the analyst identifier into the feedback log and JSON preview.</div>
+            </div>
+            <div class="data-item">
+              <div class="data-label">Feedback Timestamp</div>
+              <div class="data-value" style="font-family: monospace;">Auto-captured on submit</div>
+              <div class="small-muted">Req 2 Objective: log identifier + timestamp + action taken.</div>
+            </div>
+          </div>
+
+          <div id="feedback-content">
+            <div class="button-group">
+              <button class="btn btn-confirm" onclick="submitFeedback('confirm_valid')">✓ Confirm Valid</button>
+              <button class="btn btn-reject" onclick="submitFeedback('reject_false_positive')">✗ Reject (False Positive)</button>
+            </div>
+
+            <div class="comment-section">
+              <label class="comment-label">Add Free-Text Comments (Objective)</label>
+              <textarea id="feedback-comment" rows="3" placeholder="Enter any additional comments or corrections for this detection..."></textarea>
+              <button class="btn-submit" onclick="submitComment()">Submit Comment</button>
+            </div>
+
+            <div class="feedback-note">
+              <p style="font-weight: 600; margin-bottom: 0.25rem;">Feedback Logging Notes (MVP approximation of Req 2 Objective):</p>
+              <p>
+                • Action is logged with analyst identifier and timestamp<br>
+                • Feedback is attached to the alert record (see JSON preview updating below)<br>
+                • In production, validated feedback can be queued for retraining workflows
+              </p>
+            </div>
+
+            <div style="margin-top: 1rem;">
+              <div class="data-label" style="margin-bottom: 0.5rem;">Updated Alert Data JSON (after feedback)</div>
+              <pre class="json" id="alert-json-after">${escapeHtml(JSON.stringify(initialJson, null, 2))}</pre>
+            </div>
+          </div>
+        </div>
+      `;
+
+      document.getElementById("modal").classList.add("active");
+    }
+
+    function closeModal() {
+      document.getElementById("modal").classList.remove("active");
+      activeDetectionId = null;
+    }
+
+    function requireAnalystId() {
+      const analystId = (document.getElementById("analyst-id")?.value || "").trim();
+      if (!analystId) {
+        alert("Please enter an Analyst Identifier before submitting feedback.");
+        return null;
+      }
+      return analystId;
+    }
+
+    function submitFeedback(action) {
+      const analystId = requireAnalystId();
+      if (!analystId) return;
+
+      const detection = detections.find(d => d.id === activeDetectionId);
+      if (!detection) return;
+
+      const comment = (document.getElementById("feedback-comment")?.value || "").trim() || null;
+
+      const updated = buildAlertJson(detection, analystId, action, comment);
+      const pretty = JSON.stringify(updated, null, 2);
+
+      // Update the JSON panes
+      const jsonAfter = document.getElementById("alert-json-after");
+      if (jsonAfter) jsonAfter.textContent = pretty;
+
+      // Success banner
+      document.getElementById("feedback-content").insertAdjacentHTML(
+        "afterbegin",
+        `<div class="feedback-success" style="margin-bottom: 1rem;">
+          <p style="color: #166534; font-weight: 700; font-size: 1rem;">✓ Feedback Logged</p>
+          <p style="color: #16a34a; font-size: 0.875rem; margin-top: 0.35rem;">
+            Action: <span style="font-family: monospace;">${escapeHtml(action)}</span> • Analyst: <span style="font-family: monospace;">${escapeHtml(analystId)}</span>
+          </p>
+        </div>`
+      );
+    }
+
+    function submitComment() {
+      const comment = (document.getElementById("feedback-comment")?.value || "").trim();
+      if (!comment) {
+        alert("Please enter a comment before submitting.");
+        return;
+      }
+      // Treat comment-only as an action for logging
+      submitFeedback("comment_added");
+    }
+
+    // Close modal if clicking outside content
+    document.getElementById("modal").addEventListener("click", function(e) {
+      if (e.target === this) closeModal();
+    });
+
+    // Escape to close modal
+    document.addEventListener("keydown", function(e) {
+      if (e.key === "Escape") closeModal();
+    });
+
+    // Simple HTML escaping for injected strings
+    function escapeHtml(str) {
+      return String(str)
+        .replaceAll("&", "&amp;")
+        .replaceAll("<", "&lt;")
+        .replaceAll(">", "&gt;")
+        .replaceAll('"', "&quot;")
+        .replaceAll("'", "&#039;");
+    }
+
+    // ----------------------------
+    // BOOTSTRAP
+    // ----------------------------
+    (async function boot() {
+      try {
+        setLoadingStatus("Checking libraries…");
+        await loadLeaflet();
+
+        // If Leaflet is blocked by policy, you’ll hit the catch block.
+        setLoadingStatus("Initializing map…");
+        initializeMap();
+      } catch (err) {
+        console.error(err);
+        const loading = document.getElementById("loading");
+        loading.innerHTML = `
+          <div style="text-align: center; max-width: 720px; padding: 1rem;">
+            <h2 style="color: #dc2626; margin-bottom: 0.75rem;">⚠ Map Library Load Error</h2>
+            <p style="color: #e2e8f0; margin-bottom: 0.75rem;">
+              Leaflet failed to load from all CDNs. This is common on restricted networks.
+            </p>
+            <pre style="text-align:left; white-space: pre-wrap; background:#0b1220; border:1px solid #1f2937; padding:1rem; border-radius:8px; color:#e5e7eb; font-size:0.85rem; line-height:1.4;">
+${escapeHtml(err.message)}
+            </pre>
+            <p style="color:#94a3b8; font-size:0.85rem; margin-top:0.75rem; line-height:1.4;">
+              Fix options:
+              <br>1) Try again on a network that allows unpkg/jsdelivr/cdnjs.
+              <br>2) Vendor option: download Leaflet and host it locally in your repo, then reference local files.
+            </p>
+            <button onclick="location.reload()" style="margin-top: 1rem; padding: 0.75rem 1.5rem; background: #2563eb; color: white; border: none; border-radius: 6px; cursor: pointer;">
+              Refresh Page
+            </button>
+          </div>
+        `;
+      }
+    })();
+  </script>
 </body>
 </html>
