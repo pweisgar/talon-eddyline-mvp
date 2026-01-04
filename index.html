@@ -25,6 +25,31 @@
 
     #map { flex: 1; position: relative; background: #334155; }
 
+    /* Easy callout badge for demo: OURAIRPORTS vs FALLBACK */
+    .source-badge {
+      position: absolute;
+      top: 12px;
+      right: 12px;
+      z-index: 1200;
+      background: rgba(15, 23, 42, 0.92);
+      color: #e2e8f0;
+      border: 1px solid rgba(255,255,255,0.25);
+      border-radius: 10px;
+      padding: 8px 10px;
+      font-size: 12px;
+      font-weight: 700;
+      letter-spacing: 0.2px;
+      box-shadow: 0 6px 16px rgba(0,0,0,0.25);
+      user-select: none;
+    }
+    .source-badge small {
+      display: block;
+      font-weight: 600;
+      color: #94a3b8;
+      margin-top: 2px;
+      letter-spacing: 0;
+    }
+
     /* Hover panel (replaces always-on legend) */
     .airport-panel {
       position: absolute;
@@ -206,6 +231,9 @@
 
   <div id="map"></div>
 
+  <!-- Demo callout: shows if OurAirports succeeded or fallback was used -->
+  <div id="source-badge" class="source-badge" style="display:none;"></div>
+
   <!-- Hover-only panel (per-airport priorities) -->
   <div id="airport-panel" class="airport-panel" aria-live="polite"></div>
 
@@ -329,8 +357,31 @@
       // 68CO (P2 only)
       { id: 40, airport_ident: "68CO", type: "Vertical Obstruction", typeShort: "Vertical Obstruction", icao: "68CO", timestamp: "2025-01-24T08:40:00Z", coordinates: { lat: 38.9302, lon: -104.7402 }, confidence: 0.88, sourceImageTimestamp: "2025-01-24T07:05:00Z", estimatedHeight: "2.0m", status: "Active", priority: 2, description: "Equipment detected near approach surface" }
 
-      // 19CO: intentionally no detections to demonstrate "hide zeros / no detections"
+      // 19CO: intentionally no detections
     ];
+
+    // ----------------------------
+    // NEW: Snap non-KCOS detection coords to airport coords (with jitter)
+    // ----------------------------
+    function applyAirportCoordsToDetections(airports, jitterMeters = 250) {
+      const byIdent = new Map(airports.map(a => [a.ident, a]));
+
+      function jitterLatLon(lat, lon, meters) {
+        const dLat = (Math.random() - 0.5) * 2 * (meters / 111320);
+        const denom = (111320 * Math.cos(lat * Math.PI / 180)) || 1;
+        const dLon = (Math.random() - 0.5) * 2 * (meters / denom);
+        return { lat: lat + dLat, lon: lon + dLon };
+      }
+
+      for (const d of detections) {
+        if (d.airport_ident === "KCOS") continue;
+        const a = byIdent.get(d.airport_ident);
+        if (!a) continue;
+        const p = jitterLatLon(a.lat, a.lon, jitterMeters);
+        d.coordinates.lat = p.lat;
+        d.coordinates.lon = p.lon;
+      }
+    }
 
     // ----------------------------
     // MAP + UI
@@ -356,7 +407,6 @@
       return counts;
     }
 
-    // Optional demo polish: severity-based dot color
     // - gray: no detections
     // - yellow: only P3/P4
     // - red: any P1/P2
@@ -428,7 +478,6 @@
     function hideAirportPanelSoon() {
       const panel = document.getElementById("airport-panel");
       if (!panel) return;
-      // Slightly longer delay reduces hover "twitch" around popups
       hoverHideTimer = setTimeout(() => {
         panel.classList.remove("active");
       }, 350);
@@ -587,7 +636,7 @@
         "https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}",
         { attribution: "&copy; Esri", maxZoom: 18 }
       ).addTo(mapInstance);
-      
+
       // Boundaries + labels overlay (adds country/state lines + place names)
       L.tileLayer(
         "https://services.arcgisonline.com/ArcGIS/rest/services/Reference/World_Boundaries_and_Places/MapServer/tile/{z}/{y}/{x}",
@@ -595,6 +644,16 @@
       ).addTo(mapInstance);
 
       const airports = await loadAirportsFromOurAirportsOrFallback();
+
+      // NEW: align detection coordinates to whichever airport source was used
+      applyAirportCoordsToDetections(airports, 250);
+
+      // NEW: easy on-screen callout for demo
+      const badge = document.getElementById("source-badge");
+      if (badge) {
+        badge.style.display = "block";
+        badge.innerHTML = `Airport source: ${escapeHtml(AIRPORT_SOURCE)}<small>OurAirports live CSV vs hardcoded fallback</small>`;
+      }
 
       airportMarkers.forEach(m => m.remove());
       airportMarkers = [];
