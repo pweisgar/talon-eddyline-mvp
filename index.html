@@ -731,10 +731,17 @@
       const detection = detections.find(d => d.id === detectionId);
       if (!detection) return;
       activeDetectionId = detectionId;
-
-      const priorityClasses = { 1: "priority-1", 2: "priority-2", 3: "priority-3", 4: "priority-4" };
-      document.getElementById("modal-subtitle").textContent = `ICAO: ${detection.icao} | Detection ID: ${detection.id}`;
-
+    
+      const priorityClasses = {
+        1: "priority-1",
+        2: "priority-2",
+        3: "priority-3",
+        4: "priority-4"
+      };
+    
+      document.getElementById("modal-subtitle").textContent =
+        `ICAO: ${detection.icao} | Detection ID: ${detection.id}`;
+    
       const initialJson = buildAlertJson(detection, "", null, null);
 
       document.getElementById("modal-body").innerHTML = `
