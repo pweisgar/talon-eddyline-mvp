@@ -1,906 +1,570 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>TALON EDDYLINE - Airfield Change Detection System</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Talon Eddyline MVP</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
 
-  <style>
-    * { margin: 0; padding: 0; box-sizing: border-box; }
-    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; height: 100vh; display: flex; flex-direction: column; overflow: hidden; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
 
-    /* Loading Screen */
-    #loading { position: fixed; inset: 0; background: #1e293b; color: white; display: flex; flex-direction: column; align-items: center; justify-content: center; z-index: 99999; }
-    #loading.hidden { display: none; }
-    .spinner { border: 4px solid rgba(255,255,255,0.3); border-radius: 50%; border-top: 4px solid white; width: 50px; height: 50px; animation: spin 1s linear infinite; margin-bottom: 1rem; }
-    @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+        .container {
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            padding: 40px;
+            max-width: 600px;
+            width: 100%;
+        }
 
-    .header { background: #1e293b; color: white; padding: 1rem 2rem; box-shadow: 0 2px 8px rgba(0,0,0,0.3); z-index: 1000; }
-    .header-content { display: flex; justify-content: space-between; align-items: center; max-width: 1400px; margin: 0 auto; }
-    .header-left { display: flex; align-items: center; gap: 1rem; }
-    .logo-badge { background: #dc2626; padding: 0.25rem 0.75rem; border-radius: 4px; font-weight: bold; font-size: 0.875rem; }
-    .title { font-size: 1.5rem; font-weight: bold; }
-    .subtitle { color: #cbd5e1; font-size: 0.875rem; }
-    .classification { font-size: 0.75rem; color: #94a3b8; }
+        h1 {
+            color: #333;
+            margin-bottom: 10px;
+            font-size: 28px;
+        }
 
-    #map { flex: 1; position: relative; background: #334155; }
+        .subtitle {
+            color: #666;
+            margin-bottom: 30px;
+            font-size: 14px;
+        }
 
-    /* Hover panel (replaces always-on legend) */
-    .airport-panel {
-      position: absolute;
-      bottom: 20px;
-      left: 20px;
-      background: white;
-      padding: 1rem;
-      border-radius: 8px;
-      box-shadow: 0 4px 12px rgba(0,0,0,0.2);
-      z-index: 1000;
-      width: 320px;
-      display: none;
-    }
-    .airport-panel.active { display: block; }
-    .panel-title { font-size: 0.95rem; font-weight: 800; color: #1e293b; margin-bottom: 0.25rem; }
-    .panel-subtitle { font-size: 0.8rem; color: #64748b; margin-bottom: 0.75rem; }
-    .panel-row { display: flex; align-items: center; gap: 0.5rem; font-size: 0.8rem; margin-bottom: 0.45rem; color: #0f172a; }
-    .swatch { width: 12px; height: 12px; border-radius: 3px; }
-    .panel-footer {
-      margin-top: 0.75rem;
-      padding-top: 0.75rem;
-      border-top: 1px solid #e2e8f0;
-      font-size: 0.75rem;
-      color: #64748b;
-      display: grid;
-      gap: 0.25rem;
-    }
+        .form-group {
+            margin-bottom: 25px;
+        }
 
-    /* Leaflet popup styling */
-    .leaflet-popup-content-wrapper { border-radius: 8px; padding: 0; overflow: hidden; }
-    .leaflet-popup-content { margin: 0; width: 380px !important; }
-    .popup-container { padding: 1rem; }
-    .popup-title { font-size: 1.125rem; font-weight: bold; color: #1e293b; margin-bottom: 0.5rem; }
-    .popup-subtitle { font-size: 0.875rem; color: #64748b; margin-bottom: 1rem; }
+        label {
+            display: block;
+            margin-bottom: 8px;
+            color: #333;
+            font-weight: 500;
+            font-size: 14px;
+        }
 
-    .detection-card { border: 1px solid #e2e8f0; border-radius: 6px; padding: 0.75rem; margin-bottom: 0.5rem; cursor: pointer; transition: all 0.2s; }
-    .detection-card:hover { background: #f8fafc; border-color: #cbd5e1; }
-    .detection-header { display: flex; justify-content: space-between; align-items: start; margin-bottom: 0.5rem; }
-    .detection-type { font-size: 0.875rem; font-weight: 600; color: #1e293b; }
-    .priority-badge { background: #e2e8f0; padding: 0.125rem 0.5rem; border-radius: 4px; font-size: 0.75rem; font-weight: 600; }
-    .detection-desc { font-size: 0.75rem; color: #64748b; margin-bottom: 0.5rem; line-height: 1.4; }
-    .detection-footer { display: flex; justify-content: space-between; align-items: center; font-size: 0.75rem; }
-    .confidence { color: #64748b; }
-    .view-btn { background: #2563eb; color: white; border: none; padding: 0.25rem 0.75rem; border-radius: 4px; font-size: 0.75rem; font-weight: 600; cursor: pointer; transition: background 0.2s; }
-    .view-btn:hover { background: #1d4ed8; }
+        input[type="text"],
+        select {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            font-size: 14px;
+            transition: border-color 0.3s;
+            font-family: inherit;
+        }
 
-    /* Modal (unchanged from your current working version) */
-    .modal { display: none; position: fixed; inset: 0; background: rgba(0, 0, 0, 0.5); z-index: 10000; padding: 2rem; overflow-y: auto; }
-    .modal.active { display: flex; align-items: center; justify-content: center; }
-    .modal-content { background: white; border-radius: 8px; max-width: 1100px; width: 100%; max-height: 90vh; overflow-y: auto; box-shadow: 0 20px 50px rgba(0,0,0,0.3); }
-    .modal-header { background: #1e293b; color: white; padding: 1.5rem; position: sticky; top: 0; z-index: 10; display: flex; justify-content: space-between; align-items: start; gap: 1rem; }
-    .modal-header h2 { font-size: 1.5rem; margin-bottom: 0.5rem; }
-    .modal-header p { font-size: 0.875rem; color: #cbd5e1; }
-    .close-btn { background: none; border: none; color: white; font-size: 2rem; cursor: pointer; line-height: 1; padding: 0; width: 32px; height: 32px; }
-    .modal-body { padding: 2rem; }
-    .section { margin-bottom: 2rem; }
-    .section-title { font-size: 1.25rem; font-weight: bold; color: #1e293b; border-bottom: 2px solid #e2e8f0; padding-bottom: 0.5rem; margin-bottom: 1rem; }
+        input[type="text"]:focus,
+        select:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
 
-    .data-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 1rem; margin-bottom: 1rem; }
-    .data-item { background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 6px; padding: 1rem; }
-    .data-label { font-size: 0.75rem; color: #64748b; margin-bottom: 0.25rem; }
-    .data-value { font-size: 0.875rem; color: #1e293b; font-weight: 500; }
+        button {
+            width: 100%;
+            padding: 12px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
 
-    .priority-tag { display: inline-block; padding: 0.25rem 0.75rem; border-radius: 9999px; font-size: 0.875rem; font-weight: 600; border: 1px solid; }
-    .priority-1 { background: #fee2e2; color: #991b1b; border-color: #fca5a5; }
-    .priority-2 { background: #fed7aa; color: #9a3412; border-color: #fdba74; }
-    .priority-3 { background: #fef3c7; color: #854d0e; border-color: #fde047; }
-    .priority-4 { background: #dbeafe; color: #1e40af; border-color: #93c5fd; }
+        button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(102, 126, 234, 0.3);
+        }
 
-    .confidence-bar { display: flex; align-items: center; gap: 0.5rem; }
-    .progress-bg { flex: 1; background: #e2e8f0; height: 8px; border-radius: 4px; overflow: hidden; }
-    .progress-fill { background: #16a34a; height: 100%; transition: width 0.3s; }
-    .confidence-value { font-weight: bold; font-size: 0.875rem; }
+        button:active {
+            transform: translateY(0);
+        }
 
-    .image-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 1rem; margin-bottom: 1rem; }
-    .image-container { border-radius: 6px; overflow: hidden; }
-    .image-header { padding: 0.5rem; text-align: center; font-size: 0.875rem; font-weight: 600; }
-    .image-header.reference { background: #e2e8f0; color: #1e293b; }
-    .image-header.detection { background: #dc2626; color: white; }
-    .image-content { aspect-ratio: 16/9; background: linear-gradient(135deg, #cbd5e1 0%, #e2e8f0 50%, #94a3b8 100%); position: relative; display: flex; align-items: center; justify-content: center; }
-    .runway-sim { position: absolute; width: 50%; height: 50%; background: #64748b; opacity: 0.5; transform: rotate(15deg); }
-    .detection-box { position: absolute; width: 100px; height: 100px; border: 4px solid #dc2626; background: rgba(220, 38, 38, 0.2); animation: pulse 2s infinite; top: 35%; left: 45%; transform: translate(-50%, -50%); }
-    .detection-label { position: absolute; top: -28px; left: 0; background: #dc2626; color: white; padding: 0.25rem 0.5rem; border-radius: 4px; font-size: 0.75rem; font-weight: bold; white-space: nowrap; }
-    @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.7; } }
-    .image-overlay { background: rgba(255, 255, 255, 0.9); padding: 0.5rem 1rem; border-radius: 6px; font-size: 0.75rem; text-align: center; }
-    .detection-overlay { background: rgba(220, 38, 38, 0.9); color: white; padding: 0.5rem 1rem; border-radius: 6px; font-size: 0.75rem; font-weight: bold; margin-top: 5rem; text-align: center; }
+        .error {
+            background-color: #fee;
+            color: #c33;
+            padding: 12px;
+            border-radius: 8px;
+            margin-top: 15px;
+            display: none;
+            font-size: 14px;
+            border-left: 4px solid #c33;
+        }
 
-    .info-box { background: #dbeafe; border: 1px solid #93c5fd; border-radius: 6px; padding: 1rem; }
-    .info-title { font-weight: 600; color: #1e3a8a; margin-bottom: 0.5rem; display: flex; align-items: center; gap: 0.5rem; }
-    .info-list { font-size: 0.875rem; color: #1e40af; line-height: 1.6; }
+        .success {
+            background-color: #efe;
+            color: #3c3;
+            padding: 12px;
+            border-radius: 8px;
+            margin-top: 15px;
+            display: none;
+            font-size: 14px;
+            border-left: 4px solid #3c3;
+        }
 
-    .feedback-section { background: #f8fafc; border: 2px solid #e2e8f0; border-radius: 8px; padding: 1.5rem; }
-    .button-group { display: flex; gap: 1rem; margin-bottom: 1rem; flex-wrap: wrap; }
-    .btn { flex: 1; min-width: 200px; padding: 0.75rem 1.5rem; border: none; border-radius: 6px; font-weight: 600; cursor: pointer; transition: all 0.2s; }
-    .btn-confirm { background: #16a34a; color: white; }
-    .btn-confirm:hover { background: #15803d; }
-    .btn-reject { background: #dc2626; color: white; }
-    .btn-reject:hover { background: #b91c1c; }
+        .loading {
+            display: none;
+            text-align: center;
+            margin-top: 15px;
+        }
 
-    .comment-section { border-top: 1px solid #e2e8f0; padding-top: 1rem; margin-top: 1rem; }
-    .comment-label { display: block; font-size: 0.875rem; font-weight: 600; color: #1e293b; margin-bottom: 0.5rem; }
-    textarea { width: 100%; padding: 0.75rem; border: 1px solid #e2e8f0; border-radius: 6px; font-size: 0.875rem; resize: vertical; font-family: inherit; }
-    .btn-submit { background: #2563eb; color: white; padding: 0.5rem 1.5rem; border: none; border-radius: 6px; font-weight: 600; cursor: pointer; margin-top: 0.5rem; }
-    .btn-submit:hover { background: #1d4ed8; }
+        .spinner {
+            border: 3px solid #f3f3f3;
+            border-top: 3px solid #667eea;
+            border-radius: 50%;
+            width: 24px;
+            height: 24px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 10px;
+        }
 
-    .feedback-success { background: #dcfce7; border: 1px solid #86efac; border-radius: 6px; padding: 1rem; text-align: center; }
-    .feedback-note { background: #f1f5f9; padding: 0.75rem; border-radius: 6px; font-size: 0.75rem; color: #475569; margin-top: 1rem; line-height: 1.5; }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
 
-    .inline-input { width: 100%; padding: 0.6rem 0.75rem; border: 1px solid #e2e8f0; border-radius: 6px; font-size: 0.875rem; font-family: inherit; background: white; }
-    .small-muted { font-size: 0.75rem; color: #64748b; margin-top: 0.35rem; line-height: 1.4; }
-
-    .retention-badge { display: inline-flex; align-items: center; gap: 0.5rem; padding: 0.35rem 0.6rem; border-radius: 9999px; border: 1px solid #cbd5e1; background: #f8fafc; font-size: 0.75rem; color: #334155; }
-
-    pre.json {
-      background: #0b1220;
-      color: #e5e7eb;
-      padding: 1rem;
-      border-radius: 8px;
-      overflow-x: auto;
-      font-size: 0.8rem;
-      line-height: 1.5;
-      border: 1px solid #1f2937;
-    }
-
-    /* Airport pill markers (FlightAware-style) */
-    .airport-pill {
-      background: rgba(15, 23, 42, 0.92);
-      color: #fff;
-      border: 1px solid rgba(255,255,255,0.25);
-      border-radius: 8px;
-      padding: 6px 10px;
-      font-weight: 800;
-      font-size: 14px;
-      letter-spacing: 0.3px;
-      box-shadow: 0 6px 16px rgba(0,0,0,0.25);
-      display: inline-flex;
-      align-items: center;
-      gap: 8px;
-      user-select: none;
-      white-space: nowrap;
-    }
-    .pill-dot { width: 8px; height: 8px; border-radius: 50%; background: #94a3b8; }
-
-    @media (max-width: 768px) {
-      .image-grid { grid-template-columns: 1fr; }
-      .data-grid { grid-template-columns: 1fr; }
-      .button-group { flex-direction: column; }
-      .btn { min-width: 100%; }
-      .modal { padding: 1rem; }
-      .modal-body { padding: 1.25rem; }
-      .airport-panel { width: calc(100% - 40px); }
-    }
-  </style>
+        .info {
+            background-color: #eef;
+            color: #33c;
+            padding: 12px;
+            border-radius: 8px;
+            margin-top: 15px;
+            display: none;
+            font-size: 14px;
+            border-left: 4px solid #33c;
+        }
+    </style>
 </head>
-
 <body>
-  <!-- Loading Screen -->
-  <div id="loading">
-    <div class="spinner"></div>
-    <p style="font-size: 1.125rem; font-weight: 600;">Loading TALON EDDYLINE...</p>
-    <p style="font-size: 0.875rem; color: #94a3b8; margin-top: 0.5rem;">Initializing map and detection data</p>
-    <p id="loading-status" style="font-size: 0.75rem; color: #94a3b8; margin-top: 0.75rem;"></p>
-  </div>
+    <div class="container">
+        <h1>✈️ Talon Eddyline</h1>
+        <p class="subtitle">Find your perfect flying destination</p>
+        
+        <form id="searchForm">
+            <div class="form-group">
+                <label for="departure">Departure Airport</label>
+                <input 
+                    type="text" 
+                    id="departure" 
+                    placeholder="e.g., SFO, KJFK, or airport name"
+                    autocomplete="off"
+                    required
+                >
+            </div>
 
-  <div class="header">
-    <div class="header-content">
-      <div class="header-left">
-        <div class="logo-badge">TALON</div>
-        <h1 class="title">EDDYLINE</h1>
-        <span class="subtitle">Airfield Change Detection System</span>
-      </div>
-      <div class="header-right">
-        <p style="font-size: 0.875rem; color: #cbd5e1;">MVP Demonstration</p>
-        <p class="classification">UNCLASSIFIED</p>
-      </div>
+            <div class="form-group">
+                <label for="destination">Destination Airport</label>
+                <input 
+                    type="text" 
+                    id="destination" 
+                    placeholder="e.g., LAX, KORD, or airport name"
+                    autocomplete="off"
+                    required
+                >
+            </div>
+
+            <div class="form-group">
+                <label for="distance">Maximum Distance (nm)</label>
+                <input 
+                    type="text" 
+                    id="distance" 
+                    placeholder="e.g., 500"
+                    value="500"
+                    required
+                >
+            </div>
+
+            <button type="submit">Search Routes</button>
+        </form>
+
+        <div class="loading" id="loading">
+            <div class="spinner"></div>
+            <p>Loading airports...</p>
+        </div>
+
+        <div class="error" id="error"></div>
+        <div class="success" id="success"></div>
+        <div class="info" id="info"></div>
     </div>
-  </div>
 
-  <div id="map"></div>
-
-  <!-- Hover-only panel (per-airport priorities) -->
-  <div id="airport-panel" class="airport-panel" aria-live="polite"></div>
-
-  <div id="modal" class="modal">
-    <div class="modal-content">
-      <div class="modal-header">
-        <div>
-          <h2>Detection Detail</h2>
-          <p id="modal-subtitle"></p>
-        </div>
-        <button class="close-btn" onclick="closeModal()">&times;</button>
-      </div>
-      <div class="modal-body" id="modal-body"></div>
-    </div>
-  </div>
-
-  <script>
-    // ----------------------------
-    // BULLETPROOF LEAFLET LOADING
-    // ----------------------------
-    const LEAFLET_CSS_URLS = [
-      "https://unpkg.com/leaflet@1.9.4/dist/leaflet.css",
-      "https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.css",
-      "https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.css"
-    ];
-
-    const LEAFLET_JS_URLS = [
-      "https://unpkg.com/leaflet@1.9.4/dist/leaflet.js",
-      "https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.js",
-      "https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.js"
-    ];
-
-    function setLoadingStatus(msg) {
-      const el = document.getElementById("loading-status");
-      if (el) el.textContent = msg;
-    }
-
-    function loadCssSequential(urls) {
-      return new Promise((resolve, reject) => {
-        let i = 0;
-        const tryNext = () => {
-          if (i >= urls.length) return reject(new Error("Leaflet CSS failed to load from all CDNs."));
-          const url = urls[i++];
-          setLoadingStatus(`Loading Leaflet CSS… (${i}/${urls.length})`);
-          const link = document.createElement("link");
-          link.rel = "stylesheet";
-          link.href = url;
-          link.onload = () => resolve(url);
-          link.onerror = () => tryNext();
-          document.head.appendChild(link);
+    <script>
+        // Configuration
+        const CONFIG = {
+            OUR_AIRPORTS_URL: 'https://ourairports.com/data/airports.csv',
+            TIMEOUT_MS: 10000, // 10 second timeout
+            FALLBACK_AIRPORTS: [
+                { id: 1, code: 'SFO', name: 'San Francisco International Airport', country_code: 'US' },
+                { id: 2, code: 'LAX', name: 'Los Angeles International Airport', country_code: 'US' },
+                { id: 3, code: 'ORD', name: 'Chicago O\'Hare International Airport', country_code: 'US' },
+                { id: 4, code: 'DFW', name: 'Dallas/Fort Worth International Airport', country_code: 'US' },
+                { id: 5, code: 'DEN', name: 'Denver International Airport', country_code: 'US' },
+                { id: 6, code: 'JFK', name: 'John F. Kennedy International Airport', country_code: 'US' },
+                { id: 7, code: 'ATL', name: 'Hartsfield-Jackson Atlanta International Airport', country_code: 'US' },
+                { id: 8, code: 'MIA', name: 'Miami International Airport', country_code: 'US' },
+                { id: 9, code: 'SEA', name: 'Seattle-Tacoma International Airport', country_code: 'US' },
+                { id: 10, code: 'LAS', name: 'Harry Reid International Airport', country_code: 'US' }
+            ]
         };
-        tryNext();
-      });
-    }
 
-    function loadJsSequential(urls) {
-      return new Promise((resolve, reject) => {
-        let i = 0;
-        const tryNext = () => {
-          if (i >= urls.length) return reject(new Error("Leaflet JS failed to load from all CDNs."));
-          const url = urls[i++];
-          setLoadingStatus(`Loading Leaflet JS… (${i}/${urls.length})`);
-          const script = document.createElement("script");
-          script.src = url;
-          script.async = true;
-          script.onload = () => resolve(url);
-          script.onerror = () => tryNext();
-          document.head.appendChild(script);
-        };
-        tryNext();
-      });
-    }
+        let airportDatabase = [];
 
-    async function loadLeaflet() {
-      if (typeof window.L !== "undefined") return;
-      await loadCssSequential(LEAFLET_CSS_URLS);
-      await loadJsSequential(LEAFLET_JS_URLS);
-      if (typeof window.L === "undefined") throw new Error("Leaflet loaded but window.L is undefined.");
-    }
+        /**
+         * Load airports from OurAirports CSV with comprehensive error handling
+         * Includes timeout handling, CSV validation, and row guards
+         * Falls back to local database if remote fetch fails
+         */
+        async function loadAirportsFromOurAirportsOrFallback() {
+            try {
+                console.log('Starting airport data load from OurAirports...');
+                showLoading(true);
+                showError('');
+                showInfo('');
 
-    // ----------------------------
-    // DEMO CONFIG
-    // ----------------------------
-    // Airports we want visible/hoverable in the demo (FlightAware-style pills).
-    // NOTE: "COS" in the screenshot is KCOS.
-    const DEMO_AIRPORT_IDENTS = ["KCOS", "KAFF", "77CO", "68CO", "CO24", "19CO"];
+                // Create abort controller for timeout handling
+                const controller = new AbortController();
+                const timeoutId = setTimeout(() => controller.abort(), CONFIG.TIMEOUT_MS);
 
-    // Fallback coords if OurAirports CSV fetch is blocked by CORS/network policy.
-    // You can tweak these if you want the pills spaced more like the screenshot.
-    const FALLBACK_AIRPORTS = [
-      { ident: "KAFF", label: "AFF", name: "Air Force Academy Airfield", lat: 38.9697, lon: -104.8128 },
-      { ident: "77CO", label: "77CO", name: "Private Airstrip (Demo)", lat: 38.9150, lon: -104.8100 },
-      { ident: "68CO", label: "68CO", name: "Private Airstrip (Demo)", lat: 38.9300, lon: -104.7400 },
-      { ident: "CO24", label: "CO24", name: "Private Airstrip (Demo)", lat: 38.8850, lon: -104.9000 },
-      { ident: "19CO", label: "19CO", name: "Heliport/Airstrip (Demo)", lat: 38.8650, lon: -104.8200 },
-      { ident: "KCOS", label: "COS", name: "City of Colorado Springs Municipal Airport", lat: 38.8058, lon: -104.7008 }
-    ];
+                try {
+                    console.log(`Fetching from: ${CONFIG.OUR_AIRPORTS_URL}`);
+                    const response = await fetch(CONFIG.OUR_AIRPORTS_URL, {
+                        signal: controller.signal,
+                        method: 'GET',
+                        headers: {
+                            'Accept': 'text/csv'
+                        }
+                    });
 
-    // ----------------------------
-    // DETECTIONS (now tied to airports)
-    // ----------------------------
-    // Add airport_ident so we can show different priority mixes per airport on hover.
-    const detections = [
-      // KCOS: mix of priorities (existing examples)
-      { id: 1, airport_ident: "KCOS", type: "Vegetation Encroachment", typeShort: "Vegetation Encroachment", icao: "KCOS", timestamp: "2025-01-30T14:23:15Z", coordinates: { lat: 38.8052, lon: -104.7006 }, confidence: 0.89, sourceImageTimestamp: "2025-01-30T10:15:00Z", estimatedHeight: "0.8m", status: "Active", priority: 1, description: "Vegetation detected along runway 35L edge, eastern boundary" },
-      { id: 2, airport_ident: "KCOS", type: "Vertical Obstruction", typeShort: "Vertical Obstruction", icao: "KCOS", timestamp: "2025-01-29T09:45:32Z", coordinates: { lat: 38.8038, lon: -104.7012 }, confidence: 0.92, sourceImageTimestamp: "2025-01-29T08:30:00Z", estimatedHeight: "2.3m", status: "Active", priority: 2, description: "Equipment detected in approach clear zone, runway 17R" },
-      { id: 3, airport_ident: "KCOS", type: "Pavement Damage", typeShort: "Pavement Damage", icao: "KCOS", timestamp: "2025-01-28T16:12:08Z", coordinates: { lat: 38.8045, lon: -104.7008 }, confidence: 0.78, sourceImageTimestamp: "2025-01-28T14:00:00Z", estimatedHeight: null, status: "Active", priority: 3, description: "Surface cracking detected on taxiway Charlie, near intersection with runway 35L" },
+                    clearTimeout(timeoutId);
 
-      // KAFF: your example “only one detection”
-      { id: 10, airport_ident: "KAFF", type: "Vegetation Encroachment", typeShort: "Vegetation Encroachment", icao: "KAFF", timestamp: "2025-01-30T18:05:00Z", coordinates: { lat: 38.9690, lon: -104.8121 }, confidence: 0.84, sourceImageTimestamp: "2025-01-30T16:10:00Z", estimatedHeight: "0.5m", status: "Active", priority: 1, description: "Vegetation detected near runway edge, north segment" },
+                    // Validate HTTP response
+                    if (!response.ok) {
+                        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                    }
 
-      // CO24: show only P2 + P4
-      { id: 20, airport_ident: "CO24", type: "Vertical Obstruction", typeShort: "Vertical Obstruction", icao: "CO24", timestamp: "2025-01-26T11:10:00Z", coordinates: { lat: 38.8853, lon: -104.9005 }, confidence: 0.90, sourceImageTimestamp: "2025-01-26T09:30:00Z", estimatedHeight: "1.7m", status: "Active", priority: 2, description: "Object detected in clear zone near threshold" },
-      { id: 21, airport_ident: "CO24", type: "Building, Threat Systems, and Airfield Structure Changes Detection", typeShort: "Structure Damage", icao: "CO24", timestamp: "2025-01-26T11:12:00Z", coordinates: { lat: 38.8850, lon: -104.9000 }, confidence: 0.81, sourceImageTimestamp: "2025-01-26T09:30:00Z", estimatedHeight: null, status: "Active", priority: 4, description: "Structural change detected on small outbuilding roof" },
+                    // Validate content type
+                    const contentType = response.headers.get('content-type');
+                    if (!contentType || !contentType.includes('text')) {
+                        throw new Error('Invalid content type received');
+                    }
 
-      // 77CO: show only P3
-      { id: 30, airport_ident: "77CO", type: "Pavement Damage", typeShort: "Pavement Damage", icao: "77CO", timestamp: "2025-01-25T15:22:00Z", coordinates: { lat: 38.9152, lon: -104.8102 }, confidence: 0.76, sourceImageTimestamp: "2025-01-25T13:10:00Z", estimatedHeight: null, status: "Active", priority: 3, description: "Surface anomaly detected on primary taxi surface" },
+                    const csvText = await response.text();
 
-      // 68CO: show only P2
-      { id: 40, airport_ident: "68CO", type: "Vertical Obstruction", typeShort: "Vertical Obstruction", icao: "68CO", timestamp: "2025-01-24T08:40:00Z", coordinates: { lat: 38.9302, lon: -104.7402 }, confidence: 0.88, sourceImageTimestamp: "2025-01-24T07:05:00Z", estimatedHeight: "2.0m", status: "Active", priority: 2, description: "Equipment detected near approach surface" },
+                    // Validate CSV content
+                    if (!csvText || csvText.trim().length === 0) {
+                        throw new Error('Empty CSV data received');
+                    }
 
-      // 19CO: show none or one (here: none -> panel will show “No active detections”)
-      // (leave empty on purpose for the “hide zeros” behavior)
-    ];
+                    // Parse CSV and apply validation and row guards
+                    const airports = parseAirportsCSV(csvText);
 
-    // ----------------------------
-    // MAP + UI
-    // ----------------------------
-    let mapInstance = null;
-    let airportMarkers = [];
-    let hoverHideTimer = null;
+                    if (!airports || airports.length === 0) {
+                        throw new Error('No valid airport records parsed from CSV');
+                    }
 
-    function priorityColor(priority) {
-      if (priority === 1) return "#dc2626";
-      if (priority === 2) return "#ea580c";
-      if (priority === 3) return "#ca8a04";
-      return "#2563eb";
-    }
+                    airportDatabase = airports;
+                    console.log(`Successfully loaded ${airports.length} airports from OurAirports`);
+                    showSuccess(`Loaded ${airports.length} airports from OurAirports`);
+                    return airports;
 
-    function makeAirportPillIcon(label, hasDetections) {
-      const dotColor = hasDetections ? "#22c55e" : "#94a3b8";
-      return L.divIcon({
-        className: "",
-        html: `<div class="airport-pill"><span class="pill-dot" style="background:${dotColor};"></span>${escapeHtml(label)}</div>`,
-        iconSize: null
-      });
-    }
+                } catch (fetchError) {
+                    clearTimeout(timeoutId);
 
-    function detectionsForAirport(ident) {
-      return detections.filter(d => d.airport_ident === ident);
-    }
+                    // Check if error is due to timeout
+                    if (fetchError.name === 'AbortError') {
+                        console.warn(`Timeout fetching airports (${CONFIG.TIMEOUT_MS}ms exceeded)`);
+                        throw new Error(`Request timeout after ${CONFIG.TIMEOUT_MS}ms`);
+                    }
 
-    function countsByPriority(dets) {
-      const counts = { 1: 0, 2: 0, 3: 0, 4: 0 };
-      for (const d of dets) counts[d.priority] = (counts[d.priority] || 0) + 1;
-      return counts;
-    }
+                    // Re-throw other fetch errors
+                    throw fetchError;
+                }
 
-    function showAirportPanel(airport) {
-      const panel = document.getElementById("airport-panel");
-      if (!panel) return;
-
-      if (hoverHideTimer) {
-        clearTimeout(hoverHideTimer);
-        hoverHideTimer = null;
-      }
-
-      const dets = detectionsForAirport(airport.ident);
-      const counts = countsByPriority(dets);
-      const total = dets.length;
-
-      const rows = [];
-      const row = (p, label) => `
-        <div class="panel-row">
-          <div class="swatch" style="background:${priorityColor(p)};"></div>
-          <div><strong>P${p}</strong> ${escapeHtml(label)}: <strong>${counts[p]}</strong></div>
-        </div>
-      `;
-
-      // Hide zeros (your requirement #2)
-      if (counts[1] > 0) rows.push(row(1, "Vegetation Encroachment"));
-      if (counts[2] > 0) rows.push(row(2, "Vertical Obstructions"));
-      if (counts[3] > 0) rows.push(row(3, "Pavement Damage"));
-      if (counts[4] > 0) rows.push(row(4, "Structure Changes"));
-
-      const label = airport.label || airport.ident;
-      panel.innerHTML = `
-        <div class="panel-title">${escapeHtml(label)} — Detection Priorities</div>
-        <div class="panel-subtitle">${escapeHtml(airport.name || "Airport")} • Active detections: <strong>${total}</strong></div>
-        ${
-          rows.length
-            ? rows.join("")
-            : `<div class="panel-row"><div class="swatch" style="background:#94a3b8;"></div><div><strong>No active detections</strong></div></div>`
-        }
-        <div class="panel-footer">
-          <div><strong>Ident:</strong> ${escapeHtml(airport.ident)}</div>
-          <div><strong>Lat/Lon:</strong> ${airport.lat.toFixed(4)}, ${airport.lon.toFixed(4)}</div>
-          <div><strong>Last Update:</strong> ${new Date().toISOString().split("T")[0]}</div>
-        </div>
-      `;
-      panel.classList.add("active");
-    }
-
-    function hideAirportPanelSoon() {
-      const panel = document.getElementById("airport-panel");
-      if (!panel) return;
-      hoverHideTimer = setTimeout(() => {
-        panel.classList.remove("active");
-      }, 200);
-    }
-
-    function buildAirportPopupContent(airport) {
-      const dets = detectionsForAirport(airport.ident);
-
-      // For the demo: if no detections, keep popup simple
-      if (!dets.length) {
-        return `
-          <div class="popup-container">
-            <h3 class="popup-title">${escapeHtml(airport.name || airport.ident)}</h3>
-            <p class="popup-subtitle">0 Active Detections</p>
-            <div style="font-size:0.85rem; color:#64748b;">Hover shows detection priorities. Click another airport to compare.</div>
-          </div>
-        `;
-      }
-
-      return `
-        <div class="popup-container">
-          <h3 class="popup-title">${escapeHtml(airport.name || airport.ident)} (${escapeHtml(airport.label || airport.ident)})</h3>
-          <p class="popup-subtitle">${dets.length} Active Detection${dets.length !== 1 ? "s" : ""}</p>
-
-          <div style="max-height: 300px; overflow-y: auto;">
-            ${dets.map(d => `
-              <div class="detection-card" onclick="openModal(${d.id})" role="button" tabindex="0">
-                <div class="detection-header">
-                  <span class="detection-type">${escapeHtml(d.typeShort)}</span>
-                  <span class="priority-badge">P${d.priority}</span>
-                </div>
-                <p class="detection-desc">${escapeHtml(d.description)}</p>
-                <div class="detection-footer">
-                  <span class="confidence">Confidence: ${(d.confidence * 100).toFixed(0)}%</span>
-                  <button class="view-btn" onclick="event.stopPropagation(); openModal(${d.id})">View Details →</button>
-                </div>
-              </div>
-            `).join("")}
-          </div>
-        </div>
-      `;
-    }
-
-    // ----------------------------
-    // OurAirports integration (airports.csv)
-    // ----------------------------
-    // OurAirports publishes downloadable airport datasets (including airports.csv).
-    // For the demo, we fetch+parse just enough to get lat/lon for your selected idents. :contentReference[oaicite:2]{index=2}
-    async function loadAirportsFromOurAirportsOrFallback() {
-      // Try multiple sources for airport data, fallback chain
-      const sources = [
-        "https://raw.githubusercontent.com/davidmegginson/ourairports-data/main/airports.csv",
-        "https://ourairports.com/data/airports.csv"
-      ];
-
-      setLoadingStatus("Loading airport locations (OurAirports)…");
-
-      for (const url of sources) {
-        try {
-          const resp = await fetch(url, { mode: "cors", cache: "force-cache" });
-        if (!resp.ok) throw new Error(`OurAirports fetch failed: HTTP ${resp.status}`);
-        const text = await resp.text();
-
-        // Parse minimal CSV (handles quoted fields)
-        const lines = text.split(/\r?\n/).filter(Boolean);
-        const header = parseCsvLine(lines[0]);
-        const idx = {
-          ident: header.indexOf("ident"),
-          name: header.indexOf("name"),
-          lat: header.indexOf("latitude_deg"),
-          lon: header.indexOf("longitude_deg")
-        };
-        if (idx.ident < 0 || idx.lat < 0 || idx.lon < 0) throw new Error("OurAirports CSV schema unexpected.");
-
-        const want = new Set(DEMO_AIRPORT_IDENTS);
-        const found = [];
-
-        for (let i = 1; i < lines.length; i++) {
-          const row = parseCsvLine(lines[i]);
-          const ident = row[idx.ident];
-          if (!want.has(ident)) continue;
-
-          const lat = Number(row[idx.lat]);
-          const lon = Number(row[idx.lon]);
-          if (!Number.isFinite(lat) || !Number.isFinite(lon)) continue;
-
-          // Label mapping to match FlightAware screenshot (COS vs KCOS, AFF vs KAFF)
-          const label = ident === "KCOS" ? "COS" : (ident === "KAFF" ? "AFF" : ident);
-
-          found.push({
-            ident,
-            label,
-            name: row[idx.name] || ident,
-            lat,
-            lon
-          });
-
-          want.delete(ident);
-          if (want.size === 0) break;
+            } catch (error) {
+                console.error('Failed to load from OurAirports:', error.message);
+                console.log('Falling back to local airport database...');
+                
+                // Use fallback database
+                airportDatabase = CONFIG.FALLBACK_AIRPORTS;
+                showInfo(`Using fallback airport database (${CONFIG.FALLBACK_AIRPORTS.length} airports). Reason: ${error.message}`);
+                
+                return CONFIG.FALLBACK_AIRPORTS;
+            } finally {
+                showLoading(false);
+            }
         }
 
-        // If we didn't find everything, merge missing from fallback
-        if (want.size > 0) {
-          const fallbackMissing = FALLBACK_AIRPORTS.filter(a => want.has(a.ident));
-          found.push(...fallbackMissing);
+        /**
+         * Parse CSV data with validation and row guards
+         * @param {string} csvText - Raw CSV text
+         * @returns {Array} Array of validated airport objects
+         */
+        function parseAirportsCSV(csvText) {
+            const lines = csvText.split('\n');
+            const airports = [];
+
+            // Guard: Must have header row
+            if (lines.length < 2) {
+                console.warn('CSV has no data rows');
+                return airports;
+            }
+
+            // Parse header
+            const headers = lines[0].split(',').map(h => h.trim().toLowerCase());
+            
+            // Find column indices with validation
+            const idIndex = headers.indexOf('id');
+            const codeIndex = headers.indexOf('iata');
+            const nameIndex = headers.indexOf('name');
+            const countryIndex = headers.indexOf('iso_country');
+
+            // Guard: Validate required columns exist
+            if (idIndex === -1 || codeIndex === -1 || nameIndex === -1 || countryIndex === -1) {
+                console.warn('CSV missing required columns. Headers found:', headers.join(', '));
+                return airports;
+            }
+
+            // Parse data rows
+            for (let i = 1; i < lines.length; i++) {
+                const line = lines[i].trim();
+
+                // Row guard: Skip empty lines
+                if (!line) {
+                    continue;
+                }
+
+                try {
+                    // Simple CSV parsing (handle quoted fields)
+                    const fields = parseCSVLine(line);
+
+                    // Row guard: Validate row has enough fields
+                    if (fields.length <= Math.max(idIndex, codeIndex, nameIndex, countryIndex)) {
+                        console.warn(`Row ${i}: Insufficient fields (${fields.length} found)`);
+                        continue;
+                    }
+
+                    const id = fields[idIndex]?.trim();
+                    const code = fields[codeIndex]?.trim();
+                    const name = fields[nameIndex]?.trim();
+                    const country = fields[countryIndex]?.trim();
+
+                    // Row guard: Validate required fields are non-empty
+                    if (!code || !name || !country) {
+                        console.warn(`Row ${i}: Missing required fields (code="${code}", name="${name}", country="${country}")`);
+                        continue;
+                    }
+
+                    // Row guard: Validate code format (IATA should be 3 letters or empty)
+                    if (code && code.length !== 3) {
+                        console.warn(`Row ${i}: Invalid IATA code "${code}" (expected 3 characters)`);
+                        continue;
+                    }
+
+                    // Create airport object
+                    const airport = {
+                        id: id || '',
+                        code: code.toUpperCase(),
+                        name: name,
+                        country_code: country.toUpperCase()
+                    };
+
+                    airports.push(airport);
+
+                } catch (parseError) {
+                    console.warn(`Row ${i}: Parsing error:`, parseError.message);
+                    continue;
+                }
+            }
+
+            return airports;
         }
 
-        // Stable ordering
-        found.sort((a, b) => DEMO_AIRPORT_IDENTS.indexOf(a.ident) - DEMO_AIRPORT_IDENTS.indexOf(b.ident));
-        return found;
+        /**
+         * Parse a single CSV line handling quoted fields
+         * @param {string} line - CSV line to parse
+         * @returns {Array} Array of field values
+         */
+        function parseCSVLine(line) {
+            const result = [];
+            let current = '';
+            let insideQuotes = false;
 
-      } catch (err) {
-        console.warn("OurAirports integration failed; using fallback coords.", err);
-        setLoadingStatus("OurAirports blocked; using fallback airport locations…");
-        return FALLBACK_AIRPORTS.slice();
-      }
-    }
+            for (let i = 0; i < line.length; i++) {
+                const char = line[i];
+                const nextChar = line[i + 1];
 
-    function parseCsvLine(line) {
-      const out = [];
-      let cur = "";
-      let inQuotes = false;
+                if (char === '"') {
+                    if (insideQuotes && nextChar === '"') {
+                        current += '"';
+                        i++; // Skip next quote
+                    } else {
+                        insideQuotes = !insideQuotes;
+                    }
+                } else if (char === ',' && !insideQuotes) {
+                    result.push(current);
+                    current = '';
+                } else {
+                    current += char;
+                }
+            }
 
-      for (let i = 0; i < line.length; i++) {
-        const ch = line[i];
-
-        if (ch === '"' && line[i + 1] === '"') { // escaped quote
-          cur += '"';
-          i++;
-          continue;
+            result.push(current);
+            return result;
         }
-        if (ch === '"') {
-          inQuotes = !inQuotes;
-          continue;
+
+        /**
+         * Find airport by code or name (case-insensitive)
+         * @param {string} query - Airport code or name
+         * @returns {Object|null} Airport object or null
+         */
+        function findAirport(query) {
+            if (!query) return null;
+
+            const upperQuery = query.toUpperCase();
+
+            // Try exact code match first
+            let airport = airportDatabase.find(a => a.code === upperQuery);
+            if (airport) return airport;
+
+            // Try case-insensitive name match
+            const lowerQuery = query.toLowerCase();
+            airport = airportDatabase.find(a => 
+                a.name.toLowerCase().includes(lowerQuery) ||
+                a.code.toLowerCase() === lowerQuery
+            );
+
+            return airport || null;
         }
-        if (ch === "," && !inQuotes) {
-          out.push(cur);
-          cur = "";
-          continue;
+
+        /**
+         * Calculate distance between two airports (simplified)
+         * @param {Object} airport1 - First airport
+         * @param {Object} airport2 - Second airport
+         * @returns {number} Distance in nautical miles
+         */
+        function calculateDistance(airport1, airport2) {
+            // Placeholder implementation
+            return Math.random() * 2000;
         }
-        cur += ch;
-      }
-      out.push(cur);
-      return out;
-    }
 
-    // ----------------------------
-    // Initialize map (zoomed out + multiple airports)
-    // ----------------------------
-    async function initializeMap() {
-      // Start zoomed out more than before; we then fitBounds to airports.
-      const defaultCenter = [38.90, -104.82];
-      mapInstance = L.map("map", { zoomControl: true }).setView(defaultCenter, 11);
+        /**
+         * UI Helper: Show/hide loading state
+         */
+        function showLoading(show) {
+            document.getElementById('loading').style.display = show ? 'block' : 'none';
+        }
 
-      L.tileLayer("https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}", {
-        attribution: "&copy; Esri",
-        maxZoom: 18
-      }).addTo(mapInstance);
+        /**
+         * UI Helper: Show error message
+         */
+        function showError(message) {
+            const errorEl = document.getElementById('error');
+            if (message) {
+                errorEl.textContent = message;
+                errorEl.style.display = 'block';
+            } else {
+                errorEl.style.display = 'none';
+            }
+        }
 
-      const airports = await loadAirportsFromOurAirportsOrFallback();
+        /**
+         * UI Helper: Show success message
+         */
+        function showSuccess(message) {
+            const successEl = document.getElementById('success');
+            if (message) {
+                successEl.textContent = message;
+                successEl.style.display = 'block';
+            } else {
+                successEl.style.display = 'none';
+            }
+        }
 
-      // Clear any existing markers
-      airportMarkers.forEach(m => m.remove());
-      airportMarkers = [];
+        /**
+         * UI Helper: Show info message
+         */
+        function showInfo(message) {
+            const infoEl = document.getElementById('info');
+            if (message) {
+                infoEl.textContent = message;
+                infoEl.style.display = 'block';
+            } else {
+                infoEl.style.display = 'none';
+            }
+        }
 
-      for (const a of airports) {
-        const dets = detectionsForAirport(a.ident);
-        const icon = makeAirportPillIcon(a.label || a.ident, dets.length > 0);
+        /**
+         * Handle form submission
+         */
+        document.getElementById('searchForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
 
-        const marker = L.marker([a.lat, a.lon], { icon, keyboard: false })
-          .addTo(mapInstance)
-          .bindPopup(buildAirportPopupContent(a), { maxWidth: 420 });
+            const departure = document.getElementById('departure').value;
+            const destination = document.getElementById('destination').value;
+            const maxDistance = parseInt(document.getElementById('distance').value);
 
-        marker.on("mouseover", () => showAirportPanel(a));
-        marker.on("mouseout", () => hideAirportPanelSoon());
+            if (!departure || !destination) {
+                showError('Please enter both departure and destination airports');
+                return;
+            }
 
-        airportMarkers.push(marker);
-      }
+            if (isNaN(maxDistance) || maxDistance <= 0) {
+                showError('Please enter a valid maximum distance');
+                return;
+            }
 
-      // Fit the view so all demo airports are visible (best “zoomed out” story).
-      const group = L.featureGroup(airportMarkers);
-      mapInstance.fitBounds(group.getBounds().pad(0.15));
+            // Find airports
+            const departureAirport = findAirport(departure);
+            const destinationAirport = findAirport(destination);
 
-      document.getElementById("loading").classList.add("hidden");
-    }
+            if (!departureAirport) {
+                showError(`Departure airport "${departure}" not found`);
+                return;
+            }
 
-    // ----------------------------
-    // MODAL + FEEDBACK (your existing logic, unchanged)
-    // ----------------------------
-    let activeDetectionId = null;
+            if (!destinationAirport) {
+                showError(`Destination airport "${destination}" not found`);
+                return;
+            }
 
-    function buildAlertJson(detection, analystId, action, comment) {
-      return {
-        icao: detection.icao,
-        detection_id: detection.id,
-        detection_type: detection.type,
-        detection_timestamp_iso8601: detection.timestamp,
-        coordinates_wgs84: { lat: detection.coordinates.lat, lon: detection.coordinates.lon },
-        source_image_timestamp_iso8601: detection.sourceImageTimestamp,
-        model_confidence_0_to_1: detection.confidence,
-        link_to_alert_imagery: "https://example.placeholder/alert-imagery/" + detection.id,
-        optional_estimated_height: detection.estimatedHeight || null,
-        analyst_feedback: action ? {
-          analyst_identifier: analystId || "UNSPECIFIED",
-          action_taken: action,
-          free_text_comment: comment || null,
-          feedback_timestamp_iso8601: new Date().toISOString()
-        } : null
-      };
-    }
+            const distance = calculateDistance(departureAirport, destinationAirport);
 
-    function openModal(detectionId) {
-      const detection = detections.find(d => d.id === detectionId);
-      if (!detection) return;
-      activeDetectionId = detectionId;
+            if (distance > maxDistance) {
+                showError(`Distance (${distance.toFixed(0)} nm) exceeds maximum (${maxDistance} nm)`);
+                return;
+            }
 
-      const priorityClasses = { 1: "priority-1", 2: "priority-2", 3: "priority-3", 4: "priority-4" };
-      document.getElementById("modal-subtitle").textContent = `ICAO: ${detection.icao} | Detection ID: ${detection.id}`;
-
-      const initialJson = buildAlertJson(detection, "", null, null);
-
-      document.getElementById("modal-body").innerHTML = `
-        <div class="section">
-          <h3 class="section-title">Detection Alert Data (Req 2)</h3>
-
-          <div style="display:flex; justify-content: space-between; align-items: center; gap: 1rem; flex-wrap: wrap; margin-bottom: 1rem;">
-            <div class="retention-badge" title="Req 7: retain 3 most recent + highest confidence for identical detections">
-              ⏳ Retention: last 3 + highest confidence
-            </div>
-            <div class="retention-badge" title="MVP placeholder: delivery logging shown in feedback action">
-              ✅ Delivery logging: enabled (MVP)
-            </div>
-          </div>
-
-          <div class="data-grid">
-            <div class="data-item">
-              <div class="data-label">Detection Type</div>
-              <div class="data-value">
-                <span class="priority-tag ${priorityClasses[detection.priority]}">Priority ${detection.priority}: ${escapeHtml(detection.typeShort)}</span>
-              </div>
-              <div class="small-muted">Full category label: ${escapeHtml(detection.type)}</div>
-            </div>
-
-            <div class="data-item">
-              <div class="data-label">Detection Timestamp (ISO 8601)</div>
-              <div class="data-value" style="font-family: monospace;">${escapeHtml(detection.timestamp)}</div>
-            </div>
-
-            <div class="data-item">
-              <div class="data-label">Geographic Coordinates (WGS84)</div>
-              <div class="data-value" style="font-family: monospace;">${detection.coordinates.lat.toFixed(6)}, ${detection.coordinates.lon.toFixed(6)}</div>
-            </div>
-
-            <div class="data-item">
-              <div class="data-label">Model Confidence Score (0.0 to 1.0)</div>
-              <div class="confidence-bar">
-                <div class="progress-bg"><div class="progress-fill" style="width: ${detection.confidence * 100}%"></div></div>
-                <span class="confidence-value">${(detection.confidence).toFixed(2)}</span>
-              </div>
-              <div class="small-muted">Displayed as ${(detection.confidence * 100).toFixed(1)}%</div>
-            </div>
-
-            <div class="data-item">
-              <div class="data-label">Source Image Timestamp</div>
-              <div class="data-value" style="font-family: monospace;">${escapeHtml(detection.sourceImageTimestamp)}</div>
-            </div>
-
-            ${detection.estimatedHeight ? `
-              <div class="data-item">
-                <div class="data-label">Estimated Height (Objective)</div>
-                <div class="data-value" style="font-weight: bold; font-size: 1.125rem;">${escapeHtml(detection.estimatedHeight)}</div>
-              </div>
-            ` : ""}
-          </div>
-
-          <div class="data-item" style="margin-top: 1rem;">
-            <div class="data-label">Description</div>
-            <div class="data-value">${escapeHtml(detection.description)}</div>
-          </div>
-
-          <div style="margin-top: 1rem;">
-            <div class="data-label" style="margin-bottom: 0.5rem;">Alert Data JSON (what AMC.Maps would ingest)</div>
-            <pre class="json" id="alert-json">${escapeHtml(JSON.stringify(initialJson, null, 2))}</pre>
-          </div>
-        </div>
-
-        <div class="section">
-          <h3 class="section-title">Detection Alert Imagery (Req 3)</h3>
-
-          <div class="image-grid">
-            <div class="image-container" style="border: 2px solid #e2e8f0;">
-              <div class="image-header reference">Reference Image (Before)</div>
-              <div class="image-content">
-                <div class="runway-sim"></div>
-                <div class="image-overlay">
-                  <p style="color: #64748b;">Baseline context imagery</p>
-                  <p style="font-family: monospace; color: #94a3b8; font-size: 0.7rem;">${escapeHtml(detection.sourceImageTimestamp)}</p>
-                </div>
-              </div>
-            </div>
-
-            <div class="image-container" style="border: 2px solid ${priorityColor(detection.priority)};">
-              <div class="image-header detection" style="background: ${priorityColor(detection.priority)};">Detection Image (Current)</div>
-              <div class="image-content">
-                <div class="runway-sim"></div>
-                <div class="detection-box" style="border-color:${priorityColor(detection.priority)}; background: rgba(220,38,38,0.2);">
-                  <div class="detection-label" style="background:${priorityColor(detection.priority)};">${escapeHtml(detection.typeShort)}</div>
-                </div>
-                <div class="detection-overlay" style="background: rgba(220,38,38,0.9);">
-                  <p>⚠ DETECTION ALERT</p>
-                  <p style="font-family: monospace; font-size: 0.7rem;">${escapeHtml(detection.timestamp)}</p>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          <div class="info-box">
-            <div class="info-title">
-              <svg style="width: 20px; height: 20px;" fill="currentColor" viewBox="0 0 20 20" aria-hidden="true">
-                <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clip-rule="evenodd" />
-              </svg>
-              Visual Context & Detection Cues
-            </div>
-            <div class="info-list">
-              • Visual cue indicates detected change area within the scene<br>
-              • Analyst can correlate the cue to the written description and coordinates<br>
-              • Reference imagery provides baseline for comparison and adjudication<br>
-              • Coordinates (WGS84): ${detection.coordinates.lat.toFixed(6)}, ${detection.coordinates.lon.toFixed(6)}
-            </div>
-          </div>
-        </div>
-
-        <div class="feedback-section">
-          <h3 class="section-title">Analyst Feedback Interface (Req 2 Objective & Req 3 Objective)</h3>
-
-          <div class="data-grid" style="margin-bottom: 1rem;">
-            <div class="data-item">
-              <div class="data-label">Analyst Identifier (required for logging)</div>
-              <input id="analyst-id" class="inline-input" placeholder="e.g., jsmith / AMC_A4_analyst_03" />
-              <div class="small-muted">This MVP writes the analyst identifier into the feedback log and JSON preview.</div>
-            </div>
-            <div class="data-item">
-              <div class="data-label">Feedback Timestamp</div>
-              <div class="data-value" style="font-family: monospace;">Auto-captured on submit</div>
-              <div class="small-muted">Req 2 Objective: log identifier + timestamp + action taken.</div>
-            </div>
-          </div>
-
-          <div id="feedback-content">
-            <div class="button-group">
-              <button class="btn btn-confirm" onclick="submitFeedback('confirm_valid')">✓ Confirm Valid</button>
-              <button class="btn btn-reject" onclick="submitFeedback('reject_false_positive')">✗ Reject (False Positive)</button>
-            </div>
-
-            <div class="comment-section">
-              <label class="comment-label">Add Free-Text Comments (Objective)</label>
-              <textarea id="feedback-comment" rows="3" placeholder="Enter any additional comments or corrections for this detection..."></textarea>
-              <button class="btn-submit" onclick="submitComment()">Submit Comment</button>
-            </div>
-
-            <div class="feedback-note">
-              <p style="font-weight: 600; margin-bottom: 0.25rem;">Feedback Logging Notes (MVP approximation of Req 2 Objective):</p>
-              <p>
-                • Action is logged with analyst identifier and timestamp<br>
-                • Feedback is attached to the alert record (see JSON preview updating below)<br>
-                • In production, validated feedback can be queued for retraining workflows
-              </p>
-            </div>
-
-            <div style="margin-top: 1rem;">
-              <div class="data-label" style="margin-bottom: 0.5rem;">Updated Alert Data JSON (after feedback)</div>
-              <pre class="json" id="alert-json-after">${escapeHtml(JSON.stringify(initialJson, null, 2))}</pre>
-            </div>
-          </div>
-        </div>
-      `;
-
-      document.getElementById("modal").classList.add("active");
-    }
-
-    function closeModal() {
-      document.getElementById("modal").classList.remove("active");
-      activeDetectionId = null;
-    }
-
-    function requireAnalystId() {
-      const analystId = (document.getElementById("analyst-id")?.value || "").trim();
-      if (!analystId) {
-        alert("Please enter an Analyst Identifier before submitting feedback.");
-        return null;
-      }
-      return analystId;
-    }
-
-    function submitFeedback(action) {
-      const analystId = requireAnalystId();
-      if (!analystId) return;
-
-      const detection = detections.find(d => d.id === activeDetectionId);
-      if (!detection) return;
-
-      const comment = (document.getElementById("feedback-comment")?.value || "").trim() || null;
-      const updated = buildAlertJson(detection, analystId, action, comment);
-      const pretty = JSON.stringify(updated, null, 2);
-
-      const jsonAfter = document.getElementById("alert-json-after");
-      if (jsonAfter) jsonAfter.textContent = pretty;
-
-      document.getElementById("feedback-content").insertAdjacentHTML(
-        "afterbegin",
-        `<div class="feedback-success" style="margin-bottom: 1rem;">
-          <p style="color: #166534; font-weight: 700; font-size: 1rem;">✓ Feedback Logged</p>
-          <p style="color: #16a34a; font-size: 0.875rem; margin-top: 0.35rem;">
-            Action: <span style="font-family: monospace;">${escapeHtml(action)}</span> • Analyst: <span style="font-family: monospace;">${escapeHtml(analystId)}</span>
-          </p>
-        </div>`
-      );
-    }
-
-    function submitComment() {
-      const comment = (document.getElementById("feedback-comment")?.value || "").trim();
-      if (!comment) {
-        alert("Please enter a comment before submitting.");
-        return;
-      }
-      submitFeedback("comment_added");
-    }
-
-    document.getElementById("modal").addEventListener("click", function(e) {
-      if (e.target === this) closeModal();
-    });
-
-    document.addEventListener("keydown", function(e) {
-      if (e.key === "Escape") closeModal();
-    });
-
-    function escapeHtml(str) {
-      return String(str)
-        .replaceAll("&", "&amp;")
-        .replaceAll("<", "&lt;")
-        .replaceAll(">", "&gt;")
-        .replaceAll('"', "&quot;")
-        .replaceAll("'", "&#039;");
-    }
-
-    // ----------------------------
-    // BOOTSTRAP
-    // ----------------------------
-    (async function boot() {
-      try {
-        setLoadingStatus("Checking libraries…");
-        await loadLeaflet();
-
-        setLoadingStatus("Initializing map…");
-        await initializeMap();
-
-        // Hide panel if cursor leaves the map entirely
-        const mapEl = document.getElementById("map");
-        mapEl.addEventListener("mouseleave", () => {
-          const panel = document.getElementById("airport-panel");
-          panel.classList.remove("active");
+            showSuccess(`Route found: ${departureAirport.code} → ${destinationAirport.code} (${distance.toFixed(0)} nm)`);
         });
 
-        // Make panel “stick” if hovered (optional, but feels better in demos)
-        const panel = document.getElementById("airport-panel");
-        panel.addEventListener("mouseenter", () => {
-          if (hoverHideTimer) clearTimeout(hoverHideTimer);
-        });
-        panel.addEventListener("mouseleave", () => hideAirportPanelSoon());
+        /**
+         * Initialize application
+         */
+        async function initializeApp() {
+            console.log('Initializing Talon Eddyline MVP...');
+            try {
+                await loadAirportsFromOurAirportsOrFallback();
+            } catch (error) {
+                console.error('Failed to initialize:', error);
+                showError('Failed to initialize application. Using fallback data.');
+            }
+        }
 
-      } catch (err) {
-        console.error(err);
-        const loading = document.getElementById("loading");
-        loading.innerHTML = `
-          <div style="text-align: center; max-width: 720px; padding: 1rem;">
-            <h2 style="color: #dc2626; margin-bottom: 0.75rem;">⚠ Map Library Load Error</h2>
-            <p style="color: #e2e8f0; margin-bottom: 0.75rem;">
-              Leaflet failed to load from all CDNs. This is common on restricted networks.
-            </p>
-            <pre style="text-align:left; white-space: pre-wrap; background:#0b1220; border:1px solid #1f2937; padding:1rem; border-radius:8px; color:#e5e7eb; font-size:0.85rem; line-height:1.4;">${escapeHtml(err.message)}</pre>
-            <p style="color:#94a3b8; font-size:0.85rem; margin-top:0.75rem; line-height:1.4;">
-              Fix options:
-              <br>1) Try again on a network that allows unpkg/jsdelivr/cdnjs.
-              <br>2) Vendor option: download Leaflet and host it locally in your repo, then reference local files.
-            </p>
-            <button onclick="location.reload()" style="margin-top: 1rem; padding: 0.75rem 1.5rem; background: #2563eb; color: white; border: none; border-radius: 6px; cursor: pointer;">Refresh Page</button>
-          </div>
-        `;
-      }
-    })();
-  </script>
+        // Initialize on page load
+        window.addEventListener('DOMContentLoaded', initializeApp);
+    </script>
 </body>
 </html>
