@@ -460,73 +460,76 @@
     // OurAirports publishes downloadable airport datasets (including airports.csv).
     // For the demo, we fetch+parse just enough to get lat/lon for your selected idents. :contentReference[oaicite:2]{index=2}
     async function loadAirportsFromOurAirportsOrFallback() {
-      // Try multiple sources for airport data, fallback chain
       const sources = [
         "https://raw.githubusercontent.com/davidmegginson/ourairports-data/main/airports.csv",
         "https://ourairports.com/data/airports.csv"
       ];
-
       setLoadingStatus("Loading airport locations (OurAirports)…");
-
+      
       for (const url of sources) {
         try {
           const resp = await fetch(url, { mode: "cors", cache: "force-cache" });
-        if (!resp.ok) throw new Error(`OurAirports fetch failed: HTTP ${resp.status}`);
-        const text = await resp.text();
-
-        // Parse minimal CSV (handles quoted fields)
-        const lines = text.split(/\r?\n/).filter(Boolean);
-        const header = parseCsvLine(lines[0]);
-        const idx = {
-          ident: header.indexOf("ident"),
-          name: header.indexOf("name"),
-          lat: header.indexOf("latitude_deg"),
-          lon: header.indexOf("longitude_deg")
-        };
-        if (idx.ident < 0 || idx.lat < 0 || idx.lon < 0) throw new Error("OurAirports CSV schema unexpected.");
-
-        const want = new Set(DEMO_AIRPORT_IDENTS);
-        const found = [];
-
-        for (let i = 1; i < lines.length; i++) {
-          const row = parseCsvLine(lines[i]);
-          const ident = row[idx.ident];
-          if (!want.has(ident)) continue;
-
-          const lat = Number(row[idx.lat]);
-          const lon = Number(row[idx.lon]);
-          if (!Number.isFinite(lat) || !Number.isFinite(lon)) continue;
-
-          // Label mapping to match FlightAware screenshot (COS vs KCOS, AFF vs KAFF)
-          const label = ident === "KCOS" ? "COS" : (ident === "KAFF" ? "AFF" : ident);
-
-          found.push({
-            ident,
-            label,
-            name: row[idx.name] || ident,
-            lat,
-            lon
-          });
-
-          want.delete(ident);
-          if (want.size === 0) break;
+          if (!resp.ok) throw new Error(`OurAirports fetch failed: HTTP ${resp.status}`);  // ← Fixed
+          const text = await resp.text();
+    
+          // Parse minimal CSV (handles quoted fields)
+          const lines = text.split(/\r?\n/).filter(Boolean);
+          const header = parseCsvLine(lines[0]);
+          const idx = {
+            ident: header.indexOf("ident"),
+            name: header.indexOf("name"),
+            lat: header.indexOf("latitude_deg"),
+            lon: header.indexOf("longitude_deg")
+          };
+          if (idx.ident < 0 || idx.lat < 0 || idx.lon < 0) throw new Error("OurAirports CSV schema unexpected.");
+    
+          const want = new Set(DEMO_AIRPORT_IDENTS);
+          const found = [];
+    
+          for (let i = 1; i < lines.length; i++) {
+            const row = parseCsvLine(lines[i]);
+            const ident = row[idx.ident];
+            if (!want.has(ident)) continue;
+    
+            const lat = Number(row[idx.lat]);
+            const lon = Number(row[idx.lon]);
+            if (!Number.isFinite(lat) || !Number.isFinite(lon)) continue;
+    
+            // Label mapping to match FlightAware screenshot (COS vs KCOS, AFF vs KAFF)
+            const label = ident === "KCOS" ? "COS" : (ident === "KAFF" ? "AFF" : ident);
+    
+            found.push({
+              ident,
+              label,
+              name: row[idx.name] || ident,
+              lat,
+              lon
+            });
+    
+            want.delete(ident);
+            if (want.size === 0) break;
+          }
+    
+          // If we didn't find everything, merge missing from fallback
+          if (want.size > 0) {
+            const fallbackMissing = FALLBACK_AIRPORTS.filter(a => want.has(a.ident));
+            found.push(...fallbackMissing);
+          }
+    
+          // Stable ordering
+          found.sort((a, b) => DEMO_AIRPORT_IDENTS.indexOf(a.ident) - DEMO_AIRPORT_IDENTS.indexOf(b.ident));
+          return found;  // ← Success! Exit here
+    
+        } catch (err) {
+          console.warn(`Failed to load from ${url}:`, err.message);  // ← Changed
+          continue;  // ← Try next source instead of returning
         }
-
-        // If we didn't find everything, merge missing from fallback
-        if (want.size > 0) {
-          const fallbackMissing = FALLBACK_AIRPORTS.filter(a => want.has(a.ident));
-          found.push(...fallbackMissing);
-        }
-
-        // Stable ordering
-        found.sort((a, b) => DEMO_AIRPORT_IDENTS.indexOf(a.ident) - DEMO_AIRPORT_IDENTS.indexOf(b.ident));
-        return found;
-
-      } catch (err) {
-        console.warn("OurAirports integration failed; using fallback coords.", err);
-        setLoadingStatus("OurAirports blocked; using fallback airport locations…");
-        return FALLBACK_AIRPORTS.slice();
       }
+    
+      // All sources failed, NOW return fallback
+      console.warn("All OurAirports sources failed; using fallback coords.");
+      setLoadingStatus("Using fallback airport locations…");
+      return FALLBACK_AIRPORTS.slice();
     }
 
     function parseCsvLine(line) {
