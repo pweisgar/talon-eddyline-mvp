@@ -52,6 +52,7 @@
       display: grid;
       gap: 0.25rem;
     }
+    .pill-muted { font-size: 0.72rem; color: #64748b; }
 
     /* Leaflet popup styling */
     .leaflet-popup-content-wrapper { border-radius: 8px; padding: 0; overflow: hidden; }
@@ -71,7 +72,7 @@
     .view-btn { background: #2563eb; color: white; border: none; padding: 0.25rem 0.75rem; border-radius: 4px; font-size: 0.75rem; font-weight: 600; cursor: pointer; transition: background 0.2s; }
     .view-btn:hover { background: #1d4ed8; }
 
-    /* Modal (unchanged from your current working version) */
+    /* Modal */
     .modal { display: none; position: fixed; inset: 0; background: rgba(0, 0, 0, 0.5); z-index: 10000; padding: 2rem; overflow-y: auto; }
     .modal.active { display: flex; align-items: center; justify-content: center; }
     .modal-content { background: white; border-radius: 8px; max-width: 1100px; width: 100%; max-height: 90vh; overflow-y: auto; box-shadow: 0 20px 50px rgba(0,0,0,0.3); }
@@ -288,12 +289,11 @@
     // ----------------------------
     // DEMO CONFIG
     // ----------------------------
-    // Airports we want visible/hoverable in the demo (FlightAware-style pills).
-    // NOTE: "COS" in the screenshot is KCOS.
     const DEMO_AIRPORT_IDENTS = ["KCOS", "KAFF", "77CO", "68CO", "CO24", "19CO"];
 
-    // Fallback coords if OurAirports CSV fetch is blocked by CORS/network policy.
-    // You can tweak these if you want the pills spaced more like the screenshot.
+    // Where the demo airport coords came from:
+    //  - Preferred: OurAirports airports.csv (live fetch)
+    //  - Fallback: hardcoded coords below (if CORS/network blocks fetch)
     const FALLBACK_AIRPORTS = [
       { ident: "KAFF", label: "AFF", name: "Air Force Academy Airfield", lat: 38.9697, lon: -104.8128 },
       { ident: "77CO", label: "77CO", name: "Private Airstrip (Demo)", lat: 38.9150, lon: -104.8100 },
@@ -303,31 +303,33 @@
       { ident: "KCOS", label: "COS", name: "City of Colorado Springs Municipal Airport", lat: 38.8058, lon: -104.7008 }
     ];
 
+    // Lets you prove, during demo, whether the live dataset was used.
+    // Values: "OURAIRPORTS" | "FALLBACK" | "UNKNOWN"
+    let AIRPORT_SOURCE = "UNKNOWN";
+
     // ----------------------------
-    // DETECTIONS (now tied to airports)
+    // DETECTIONS (tied to airports)
     // ----------------------------
-    // Add airport_ident so we can show different priority mixes per airport on hover.
     const detections = [
-      // KCOS: mix of priorities (existing examples)
+      // KCOS
       { id: 1, airport_ident: "KCOS", type: "Vegetation Encroachment", typeShort: "Vegetation Encroachment", icao: "KCOS", timestamp: "2025-01-30T14:23:15Z", coordinates: { lat: 38.8052, lon: -104.7006 }, confidence: 0.89, sourceImageTimestamp: "2025-01-30T10:15:00Z", estimatedHeight: "0.8m", status: "Active", priority: 1, description: "Vegetation detected along runway 35L edge, eastern boundary" },
       { id: 2, airport_ident: "KCOS", type: "Vertical Obstruction", typeShort: "Vertical Obstruction", icao: "KCOS", timestamp: "2025-01-29T09:45:32Z", coordinates: { lat: 38.8038, lon: -104.7012 }, confidence: 0.92, sourceImageTimestamp: "2025-01-29T08:30:00Z", estimatedHeight: "2.3m", status: "Active", priority: 2, description: "Equipment detected in approach clear zone, runway 17R" },
       { id: 3, airport_ident: "KCOS", type: "Pavement Damage", typeShort: "Pavement Damage", icao: "KCOS", timestamp: "2025-01-28T16:12:08Z", coordinates: { lat: 38.8045, lon: -104.7008 }, confidence: 0.78, sourceImageTimestamp: "2025-01-28T14:00:00Z", estimatedHeight: null, status: "Active", priority: 3, description: "Surface cracking detected on taxiway Charlie, near intersection with runway 35L" },
 
-      // KAFF: your example “only one detection”
+      // KAFF (single detection)
       { id: 10, airport_ident: "KAFF", type: "Vegetation Encroachment", typeShort: "Vegetation Encroachment", icao: "KAFF", timestamp: "2025-01-30T18:05:00Z", coordinates: { lat: 38.9690, lon: -104.8121 }, confidence: 0.84, sourceImageTimestamp: "2025-01-30T16:10:00Z", estimatedHeight: "0.5m", status: "Active", priority: 1, description: "Vegetation detected near runway edge, north segment" },
 
-      // CO24: show only P2 + P4
+      // CO24 (P2 + P4)
       { id: 20, airport_ident: "CO24", type: "Vertical Obstruction", typeShort: "Vertical Obstruction", icao: "CO24", timestamp: "2025-01-26T11:10:00Z", coordinates: { lat: 38.8853, lon: -104.9005 }, confidence: 0.90, sourceImageTimestamp: "2025-01-26T09:30:00Z", estimatedHeight: "1.7m", status: "Active", priority: 2, description: "Object detected in clear zone near threshold" },
       { id: 21, airport_ident: "CO24", type: "Building, Threat Systems, and Airfield Structure Changes Detection", typeShort: "Structure Damage", icao: "CO24", timestamp: "2025-01-26T11:12:00Z", coordinates: { lat: 38.8850, lon: -104.9000 }, confidence: 0.81, sourceImageTimestamp: "2025-01-26T09:30:00Z", estimatedHeight: null, status: "Active", priority: 4, description: "Structural change detected on small outbuilding roof" },
 
-      // 77CO: show only P3
+      // 77CO (P3 only)
       { id: 30, airport_ident: "77CO", type: "Pavement Damage", typeShort: "Pavement Damage", icao: "77CO", timestamp: "2025-01-25T15:22:00Z", coordinates: { lat: 38.9152, lon: -104.8102 }, confidence: 0.76, sourceImageTimestamp: "2025-01-25T13:10:00Z", estimatedHeight: null, status: "Active", priority: 3, description: "Surface anomaly detected on primary taxi surface" },
 
-      // 68CO: show only P2
-      { id: 40, airport_ident: "68CO", type: "Vertical Obstruction", typeShort: "Vertical Obstruction", icao: "68CO", timestamp: "2025-01-24T08:40:00Z", coordinates: { lat: 38.9302, lon: -104.7402 }, confidence: 0.88, sourceImageTimestamp: "2025-01-24T07:05:00Z", estimatedHeight: "2.0m", status: "Active", priority: 2, description: "Equipment detected near approach surface" },
+      // 68CO (P2 only)
+      { id: 40, airport_ident: "68CO", type: "Vertical Obstruction", typeShort: "Vertical Obstruction", icao: "68CO", timestamp: "2025-01-24T08:40:00Z", coordinates: { lat: 38.9302, lon: -104.7402 }, confidence: 0.88, sourceImageTimestamp: "2025-01-24T07:05:00Z", estimatedHeight: "2.0m", status: "Active", priority: 2, description: "Equipment detected near approach surface" }
 
-      // 19CO: show none or one (here: none -> panel will show “No active detections”)
-      // (leave empty on purpose for the “hide zeros” behavior)
+      // 19CO: intentionally no detections to demonstrate "hide zeros / no detections"
     ];
 
     // ----------------------------
@@ -344,15 +346,6 @@
       return "#2563eb";
     }
 
-    function makeAirportPillIcon(label, hasDetections) {
-      const dotColor = hasDetections ? "#22c55e" : "#94a3b8";
-      return L.divIcon({
-        className: "",
-        html: `<div class="airport-pill"><span class="pill-dot" style="background:${dotColor};"></span>${escapeHtml(label)}</div>`,
-        iconSize: null
-      });
-    }
-
     function detectionsForAirport(ident) {
       return detections.filter(d => d.airport_ident === ident);
     }
@@ -361,6 +354,26 @@
       const counts = { 1: 0, 2: 0, 3: 0, 4: 0 };
       for (const d of dets) counts[d.priority] = (counts[d.priority] || 0) + 1;
       return counts;
+    }
+
+    // Optional demo polish: severity-based dot color
+    // - gray: no detections
+    // - yellow: only P3/P4
+    // - red: any P1/P2
+    function dotColorForDetections(dets) {
+      if (!dets.length) return "#94a3b8";
+      const hasP1P2 = dets.some(d => d.priority === 1 || d.priority === 2);
+      if (hasP1P2) return "#ef4444";
+      return "#f59e0b";
+    }
+
+    function makeAirportPillIcon(label, dets) {
+      const dotColor = dotColorForDetections(dets);
+      return L.divIcon({
+        className: "",
+        html: `<div class="airport-pill"><span class="pill-dot" style="background:${dotColor};"></span>${escapeHtml(label)}</div>`,
+        iconSize: null
+      });
     }
 
     function showAirportPanel(airport) {
@@ -384,42 +397,46 @@
         </div>
       `;
 
-      // Hide zeros (your requirement #2)
+      // Hide zeros
       if (counts[1] > 0) rows.push(row(1, "Vegetation Encroachment"));
       if (counts[2] > 0) rows.push(row(2, "Vertical Obstructions"));
       if (counts[3] > 0) rows.push(row(3, "Pavement Damage"));
       if (counts[4] > 0) rows.push(row(4, "Structure Changes"));
 
       const label = airport.label || airport.ident;
+
       panel.innerHTML = `
         <div class="panel-title">${escapeHtml(label)} — Detection Priorities</div>
         <div class="panel-subtitle">${escapeHtml(airport.name || "Airport")} • Active detections: <strong>${total}</strong></div>
-        ${
-          rows.length
-            ? rows.join("")
-            : `<div class="panel-row"><div class="swatch" style="background:#94a3b8;"></div><div><strong>No active detections</strong></div></div>`
+
+        ${rows.length
+          ? rows.join("")
+          : `<div class="panel-row"><div class="swatch" style="background:#94a3b8;"></div><div><strong>No active detections</strong></div></div>`
         }
+
         <div class="panel-footer">
           <div><strong>Ident:</strong> ${escapeHtml(airport.ident)}</div>
           <div><strong>Lat/Lon:</strong> ${airport.lat.toFixed(4)}, ${airport.lon.toFixed(4)}</div>
           <div><strong>Last Update:</strong> ${new Date().toISOString().split("T")[0]}</div>
+          <div class="pill-muted"><strong>Airport source:</strong> ${escapeHtml(AIRPORT_SOURCE)}</div>
         </div>
       `;
+
       panel.classList.add("active");
     }
 
     function hideAirportPanelSoon() {
       const panel = document.getElementById("airport-panel");
       if (!panel) return;
+      // Slightly longer delay reduces hover "twitch" around popups
       hoverHideTimer = setTimeout(() => {
         panel.classList.remove("active");
-      }, 200);
+      }, 350);
     }
 
     function buildAirportPopupContent(airport) {
       const dets = detectionsForAirport(airport.ident);
 
-      // For the demo: if no detections, keep popup simple
       if (!dets.length) {
         return `
           <div class="popup-container">
@@ -457,22 +474,22 @@
     // ----------------------------
     // OurAirports integration (airports.csv)
     // ----------------------------
-    // OurAirports publishes downloadable airport datasets (including airports.csv).
-    // For the demo, we fetch+parse just enough to get lat/lon for your selected idents. :contentReference[oaicite:2]{index=2}
     async function loadAirportsFromOurAirportsOrFallback() {
       const sources = [
         "https://raw.githubusercontent.com/davidmegginson/ourairports-data/main/airports.csv",
         "https://ourairports.com/data/airports.csv"
       ];
+
       setLoadingStatus("Loading airport locations (OurAirports)…");
-      
+
+      let lastErr = null;
+
       for (const url of sources) {
         try {
           const resp = await fetch(url, { mode: "cors", cache: "force-cache" });
-          if (!resp.ok) throw new Error(`OurAirports fetch failed: HTTP ${resp.status}`);  // ← Fixed
+          if (!resp.ok) throw new Error(`OurAirports fetch failed: HTTP ${resp.status}`);
           const text = await resp.text();
-    
-          // Parse minimal CSV (handles quoted fields)
+
           const lines = text.split(/\r?\n/).filter(Boolean);
           const header = parseCsvLine(lines[0]);
           const idx = {
@@ -482,22 +499,21 @@
             lon: header.indexOf("longitude_deg")
           };
           if (idx.ident < 0 || idx.lat < 0 || idx.lon < 0) throw new Error("OurAirports CSV schema unexpected.");
-    
+
           const want = new Set(DEMO_AIRPORT_IDENTS);
           const found = [];
-    
+
           for (let i = 1; i < lines.length; i++) {
             const row = parseCsvLine(lines[i]);
             const ident = row[idx.ident];
             if (!want.has(ident)) continue;
-    
+
             const lat = Number(row[idx.lat]);
             const lon = Number(row[idx.lon]);
             if (!Number.isFinite(lat) || !Number.isFinite(lon)) continue;
-    
-            // Label mapping to match FlightAware screenshot (COS vs KCOS, AFF vs KAFF)
+
             const label = ident === "KCOS" ? "COS" : (ident === "KAFF" ? "AFF" : ident);
-    
+
             found.push({
               ident,
               label,
@@ -505,30 +521,30 @@
               lat,
               lon
             });
-    
+
             want.delete(ident);
             if (want.size === 0) break;
           }
-    
-          // If we didn't find everything, merge missing from fallback
+
           if (want.size > 0) {
-            const fallbackMissing = FALLBACK_AIRPORTS.filter(a => want.has(a.ident));
-            found.push(...fallbackMissing);
+            found.push(...FALLBACK_AIRPORTS.filter(a => want.has(a.ident)));
           }
-    
-          // Stable ordering
+
           found.sort((a, b) => DEMO_AIRPORT_IDENTS.indexOf(a.ident) - DEMO_AIRPORT_IDENTS.indexOf(b.ident));
-          return found;  // ← Success! Exit here
-    
+
+          AIRPORT_SOURCE = "OURAIRPORTS";
+          console.info(`Airports loaded from OurAirports: ${url}`);
+          return found;
+
         } catch (err) {
-          console.warn(`Failed to load from ${url}:`, err.message);  // ← Changed
-          continue;  // ← Try next source instead of returning
+          lastErr = err;
+          console.warn(`OurAirports source failed: ${url}`, err);
         }
       }
-    
-      // All sources failed, NOW return fallback
-      console.warn("All OurAirports sources failed; using fallback coords.");
-      setLoadingStatus("Using fallback airport locations…");
+
+      AIRPORT_SOURCE = "FALLBACK";
+      setLoadingStatus("OurAirports blocked; using fallback airport locations…");
+      console.warn("All OurAirports sources failed; using fallback coords.", lastErr);
       return FALLBACK_AIRPORTS.slice();
     }
 
@@ -540,7 +556,7 @@
       for (let i = 0; i < line.length; i++) {
         const ch = line[i];
 
-        if (ch === '"' && line[i + 1] === '"') { // escaped quote
+        if (ch === '"' && line[i + 1] === '"') {
           cur += '"';
           i++;
           continue;
@@ -564,7 +580,6 @@
     // Initialize map (zoomed out + multiple airports)
     // ----------------------------
     async function initializeMap() {
-      // Start zoomed out more than before; we then fitBounds to airports.
       const defaultCenter = [38.90, -104.82];
       mapInstance = L.map("map", { zoomControl: true }).setView(defaultCenter, 11);
 
@@ -575,13 +590,12 @@
 
       const airports = await loadAirportsFromOurAirportsOrFallback();
 
-      // Clear any existing markers
       airportMarkers.forEach(m => m.remove());
       airportMarkers = [];
 
       for (const a of airports) {
         const dets = detectionsForAirport(a.ident);
-        const icon = makeAirportPillIcon(a.label || a.ident, dets.length > 0);
+        const icon = makeAirportPillIcon(a.label || a.ident, dets);
 
         const marker = L.marker([a.lat, a.lon], { icon, keyboard: false })
           .addTo(mapInstance)
@@ -593,7 +607,6 @@
         airportMarkers.push(marker);
       }
 
-      // Fit the view so all demo airports are visible (best “zoomed out” story).
       const group = L.featureGroup(airportMarkers);
       mapInstance.fitBounds(group.getBounds().pad(0.15));
 
@@ -601,7 +614,7 @@
     }
 
     // ----------------------------
-    // MODAL + FEEDBACK (your existing logic, unchanged)
+    // MODAL + FEEDBACK
     // ----------------------------
     let activeDetectionId = null;
 
@@ -870,6 +883,8 @@
         setLoadingStatus("Initializing map…");
         await initializeMap();
 
+        console.info("Airport source used:", AIRPORT_SOURCE);
+
         // Hide panel if cursor leaves the map entirely
         const mapEl = document.getElementById("map");
         mapEl.addEventListener("mouseleave", () => {
@@ -877,7 +892,7 @@
           panel.classList.remove("active");
         });
 
-        // Make panel “stick” if hovered (optional, but feels better in demos)
+        // Make panel “stick” if hovered (feels better in demos)
         const panel = document.getElementById("airport-panel");
         panel.addEventListener("mouseenter", () => {
           if (hoverHideTimer) clearTimeout(hoverHideTimer);
