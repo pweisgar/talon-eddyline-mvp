@@ -583,10 +583,16 @@
       const defaultCenter = [38.90, -104.82];
       mapInstance = L.map("map", { zoomControl: true }).setView(defaultCenter, 11);
 
-      L.tileLayer("https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}", {
-        attribution: "&copy; Esri",
-        maxZoom: 18
-      }).addTo(mapInstance);
+      L.tileLayer(
+        "https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}",
+        { attribution: "&copy; Esri", maxZoom: 18 }
+      ).addTo(mapInstance);
+      
+      // Boundaries + labels overlay (adds country/state lines + place names)
+      L.tileLayer(
+        "https://services.arcgisonline.com/ArcGIS/rest/services/Reference/World_Boundaries_and_Places/MapServer/tile/{z}/{y}/{x}",
+        { attribution: "&copy; Esri", maxZoom: 18, opacity: 0.9 }
+      ).addTo(mapInstance);
 
       const airports = await loadAirportsFromOurAirportsOrFallback();
 
