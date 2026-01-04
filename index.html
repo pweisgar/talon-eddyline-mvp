@@ -25,29 +25,62 @@
 
     #map { flex: 1; position: relative; background: #334155; }
 
-    .legend { position: absolute; bottom: 20px; left: 20px; background: white; padding: 1rem; border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.2); z-index: 1000; max-width: 280px; }
+    /* Legend (now hidden until hover/tap) */
+    .legend {
+      position: absolute; bottom: 20px; left: 20px;
+      background: white; padding: 1rem; border-radius: 8px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+      z-index: 1000; max-width: 320px;
+    }
+    .legend.hidden { display: none; }
     .legend h4 { font-size: 0.875rem; font-weight: bold; margin-bottom: 0.75rem; color: #1e293b; }
     .legend-item { display: flex; align-items: center; gap: 0.5rem; font-size: 0.75rem; margin-bottom: 0.5rem; }
     .legend-color { width: 12px; height: 12px; border-radius: 2px; }
     .legend-info { margin-top: 0.75rem; padding-top: 0.75rem; border-top: 1px solid #e2e8f0; font-size: 0.75rem; color: #64748b; }
+    .legend-kv { display: flex; justify-content: space-between; gap: 0.75rem; margin-bottom: 0.35rem; }
+    .legend-kv strong { color: #1e293b; }
 
-    /* Leaflet popup styling (works once leaflet CSS loads) */
+    /* Airport "pill" marker like FlightAware */
+    .airport-pill {
+      background: rgba(15, 23, 42, 0.92);
+      color: #fff;
+      border: 1px solid rgba(255,255,255,0.22);
+      border-radius: 6px;
+      padding: 4px 8px;
+      font-weight: 700;
+      font-size: 12px;
+      letter-spacing: 0.5px;
+      box-shadow: 0 4px 10px rgba(0,0,0,0.35);
+      white-space: nowrap;
+      user-select: none;
+    }
+    .airport-pill .dot {
+      display: inline-block;
+      width: 8px; height: 8px;
+      border-radius: 50%;
+      margin-right: 6px;
+      background: #38bdf8;
+      box-shadow: 0 0 0 2px rgba(0,0,0,0.25);
+      vertical-align: middle;
+    }
+
+    /* Leaflet popup styling */
     .leaflet-popup-content-wrapper { border-radius: 8px; padding: 0; overflow: hidden; }
     .leaflet-popup-content { margin: 0; width: 380px !important; }
 
     .popup-container { padding: 1rem; }
-    .popup-title { font-size: 1.125rem; font-weight: bold; color: #1e293b; margin-bottom: 0.5rem; }
+    .popup-title { font-size: 1.125rem; font-weight: bold; color: #1e293b; margin-bottom: 0.35rem; }
     .popup-subtitle { font-size: 0.875rem; color: #64748b; margin-bottom: 1rem; }
 
     .detection-card { border: 1px solid #e2e8f0; border-radius: 6px; padding: 0.75rem; margin-bottom: 0.5rem; cursor: pointer; transition: all 0.2s; }
     .detection-card:hover { background: #f8fafc; border-color: #cbd5e1; }
     .detection-header { display: flex; justify-content: space-between; align-items: start; margin-bottom: 0.5rem; }
     .detection-type { font-size: 0.875rem; font-weight: 600; color: #1e293b; }
-    .priority-badge { background: #e2e8f0; padding: 0.125rem 0.5rem; border-radius: 4px; font-size: 0.75rem; font-weight: 600; }
+    .priority-badge { background: #e2e8f0; padding: 0.125rem 0.5rem; border-radius: 4px; font-size: 0.75rem; font-weight: 700; }
     .detection-desc { font-size: 0.75rem; color: #64748b; margin-bottom: 0.5rem; line-height: 1.4; }
     .detection-footer { display: flex; justify-content: space-between; align-items: center; font-size: 0.75rem; }
     .confidence { color: #64748b; }
-    .view-btn { background: #2563eb; color: white; border: none; padding: 0.25rem 0.75rem; border-radius: 4px; font-size: 0.75rem; font-weight: 600; cursor: pointer; transition: background 0.2s; }
+    .view-btn { background: #2563eb; color: white; border: none; padding: 0.25rem 0.75rem; border-radius: 4px; font-size: 0.75rem; font-weight: 700; cursor: pointer; transition: background 0.2s; }
     .view-btn:hover { background: #1d4ed8; }
 
     .modal { display: none; position: fixed; inset: 0; background: rgba(0, 0, 0, 0.5); z-index: 10000; padding: 2rem; overflow-y: auto; }
@@ -68,7 +101,7 @@
     .data-label { font-size: 0.75rem; color: #64748b; margin-bottom: 0.25rem; }
     .data-value { font-size: 0.875rem; color: #1e293b; font-weight: 500; }
 
-    .priority-tag { display: inline-block; padding: 0.25rem 0.75rem; border-radius: 9999px; font-size: 0.875rem; font-weight: 600; border: 1px solid; }
+    .priority-tag { display: inline-block; padding: 0.25rem 0.75rem; border-radius: 9999px; font-size: 0.875rem; font-weight: 700; border: 1px solid; }
     .priority-1 { background: #fee2e2; color: #991b1b; border-color: #fca5a5; }
     .priority-2 { background: #fed7aa; color: #9a3412; border-color: #fdba74; }
     .priority-3 { background: #fef3c7; color: #854d0e; border-color: #fde047; }
@@ -77,39 +110,39 @@
     .confidence-bar { display: flex; align-items: center; gap: 0.5rem; }
     .progress-bg { flex: 1; background: #e2e8f0; height: 8px; border-radius: 4px; overflow: hidden; }
     .progress-fill { background: #16a34a; height: 100%; transition: width 0.3s; }
-    .confidence-value { font-weight: bold; font-size: 0.875rem; }
+    .confidence-value { font-weight: 800; font-size: 0.875rem; }
 
     .image-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 1rem; margin-bottom: 1rem; }
     .image-container { border-radius: 6px; overflow: hidden; }
-    .image-header { padding: 0.5rem; text-align: center; font-size: 0.875rem; font-weight: 600; }
+    .image-header { padding: 0.5rem; text-align: center; font-size: 0.875rem; font-weight: 700; }
     .image-header.reference { background: #e2e8f0; color: #1e293b; }
     .image-header.detection { background: #dc2626; color: white; }
     .image-content { aspect-ratio: 16/9; background: linear-gradient(135deg, #cbd5e1 0%, #e2e8f0 50%, #94a3b8 100%); position: relative; display: flex; align-items: center; justify-content: center; }
     .runway-sim { position: absolute; width: 50%; height: 50%; background: #64748b; opacity: 0.5; transform: rotate(15deg); }
     .detection-box { position: absolute; width: 100px; height: 100px; border: 4px solid #dc2626; background: rgba(220, 38, 38, 0.2); animation: pulse 2s infinite; top: 35%; left: 45%; transform: translate(-50%, -50%); }
-    .detection-label { position: absolute; top: -28px; left: 0; background: #dc2626; color: white; padding: 0.25rem 0.5rem; border-radius: 4px; font-size: 0.75rem; font-weight: bold; white-space: nowrap; }
+    .detection-label { position: absolute; top: -28px; left: 0; background: #dc2626; color: white; padding: 0.25rem 0.5rem; border-radius: 4px; font-size: 0.75rem; font-weight: 800; white-space: nowrap; }
     @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.7; } }
     .image-overlay { background: rgba(255, 255, 255, 0.9); padding: 0.5rem 1rem; border-radius: 6px; font-size: 0.75rem; text-align: center; }
-    .detection-overlay { background: rgba(220, 38, 38, 0.9); color: white; padding: 0.5rem 1rem; border-radius: 6px; font-size: 0.75rem; font-weight: bold; margin-top: 5rem; text-align: center; }
+    .detection-overlay { background: rgba(220, 38, 38, 0.9); color: white; padding: 0.5rem 1rem; border-radius: 6px; font-size: 0.75rem; font-weight: 800; margin-top: 5rem; text-align: center; }
 
     .info-box { background: #dbeafe; border: 1px solid #93c5fd; border-radius: 6px; padding: 1rem; }
-    .info-title { font-weight: 600; color: #1e3a8a; margin-bottom: 0.5rem; display: flex; align-items: center; gap: 0.5rem; }
+    .info-title { font-weight: 700; color: #1e3a8a; margin-bottom: 0.5rem; display: flex; align-items: center; gap: 0.5rem; }
     .info-list { font-size: 0.875rem; color: #1e40af; line-height: 1.6; }
 
     .feedback-section { background: #f8fafc; border: 2px solid #e2e8f0; border-radius: 8px; padding: 1.5rem; }
     .button-group { display: flex; gap: 1rem; margin-bottom: 1rem; flex-wrap: wrap; }
-    .btn { flex: 1; min-width: 200px; padding: 0.75rem 1.5rem; border: none; border-radius: 6px; font-weight: 600; cursor: pointer; transition: all 0.2s; }
+    .btn { flex: 1; min-width: 200px; padding: 0.75rem 1.5rem; border: none; border-radius: 6px; font-weight: 800; cursor: pointer; transition: all 0.2s; }
     .btn-confirm { background: #16a34a; color: white; }
     .btn-confirm:hover { background: #15803d; }
     .btn-reject { background: #dc2626; color: white; }
     .btn-reject:hover { background: #b91c1c; }
 
     .comment-section { border-top: 1px solid #e2e8f0; padding-top: 1rem; margin-top: 1rem; }
-    .comment-label { display: block; font-size: 0.875rem; font-weight: 600; color: #1e293b; margin-bottom: 0.5rem; }
+    .comment-label { display: block; font-size: 0.875rem; font-weight: 800; color: #1e293b; margin-bottom: 0.5rem; }
 
     textarea { width: 100%; padding: 0.75rem; border: 1px solid #e2e8f0; border-radius: 6px; font-size: 0.875rem; resize: vertical; font-family: inherit; }
 
-    .btn-submit { background: #2563eb; color: white; padding: 0.5rem 1.5rem; border: none; border-radius: 6px; font-weight: 600; cursor: pointer; margin-top: 0.5rem; }
+    .btn-submit { background: #2563eb; color: white; padding: 0.5rem 1.5rem; border: none; border-radius: 6px; font-weight: 800; cursor: pointer; margin-top: 0.5rem; }
     .btn-submit:hover { background: #1d4ed8; }
 
     .feedback-success { background: #dcfce7; border: 1px solid #86efac; border-radius: 6px; padding: 1rem; text-align: center; }
@@ -160,25 +193,15 @@
       </div>
       <div class="header-right">
         <p style="font-size: 0.875rem; color: #cbd5e1;">MVP Demonstration</p>
-        <p class="classification">UNCLASSIFIED</p>
+        <p class="classification">UNCLASSIFIED // FOR OFFICIAL USE ONLY</p>
       </div>
     </div>
   </div>
 
   <div id="map"></div>
 
-  <div class="legend">
-    <h4>Detection Priorities</h4>
-    <div class="legend-item"><div class="legend-color" style="background: #dc2626;"></div><span>Priority 1: Vegetation Encroachment</span></div>
-    <div class="legend-item"><div class="legend-color" style="background: #ea580c;"></div><span>Priority 2: Vertical Obstructions</span></div>
-    <div class="legend-item"><div class="legend-color" style="background: #ca8a04;"></div><span>Priority 3: Pavement Damage</span></div>
-    <div class="legend-item"><div class="legend-color" style="background: #2563eb;"></div><span>Priority 4: Structure Damage</span></div>
-    <div class="legend-info">
-      <p><strong>ICAO:</strong> KCOS</p>
-      <p><strong>Location:</strong> Colorado Springs, CO</p>
-      <p><strong>Last Update:</strong> <span id="current-date"></span></p>
-    </div>
-  </div>
+  <!-- Legend now starts hidden and is filled dynamically per-airport -->
+  <div id="legend" class="legend hidden"></div>
 
   <div id="modal" class="modal">
     <div class="modal-content">
@@ -217,22 +240,17 @@
     function loadCssSequential(urls) {
       return new Promise((resolve, reject) => {
         let i = 0;
-
         const tryNext = () => {
           if (i >= urls.length) return reject(new Error("Leaflet CSS failed to load from all CDNs."));
           const url = urls[i++];
           setLoadingStatus(`Loading Leaflet CSS… (${i}/${urls.length})`);
-
           const link = document.createElement("link");
           link.rel = "stylesheet";
           link.href = url;
-
           link.onload = () => resolve(url);
           link.onerror = () => tryNext();
-
           document.head.appendChild(link);
         };
-
         tryNext();
       });
     }
@@ -240,22 +258,17 @@
     function loadJsSequential(urls) {
       return new Promise((resolve, reject) => {
         let i = 0;
-
         const tryNext = () => {
           if (i >= urls.length) return reject(new Error("Leaflet JS failed to load from all CDNs."));
           const url = urls[i++];
           setLoadingStatus(`Loading Leaflet JS… (${i}/${urls.length})`);
-
           const script = document.createElement("script");
           script.src = url;
           script.async = true;
-
           script.onload = () => resolve(url);
           script.onerror = () => tryNext();
-
           document.head.appendChild(script);
         };
-
         tryNext();
       });
     }
@@ -264,73 +277,207 @@
       if (typeof window.L !== "undefined") return;
       await loadCssSequential(LEAFLET_CSS_URLS);
       await loadJsSequential(LEAFLET_JS_URLS);
-
-      if (typeof window.L === "undefined") {
-        throw new Error("Leaflet loaded but window.L is undefined.");
-      }
+      if (typeof window.L === "undefined") throw new Error("Leaflet loaded but window.L is undefined.");
     }
 
     // ----------------------------
-    // DATA (mock; matches your MVP story)
+    // DEMO DATA: MULTIPLE AIRPORTS
     // ----------------------------
-    const detections = [
+    // This structure lets each airport have its own detection set.
+    // For the demo, these are plausible mock detections with different priority mixes.
+    const airports = [
       {
-        id: 1,
-        type: "Vegetation Encroachment",
-        typeShort: "Vegetation Encroachment",
-        icao: "KCOS",
-        timestamp: "2025-01-30T14:23:15Z",
-        coordinates: { lat: 38.8052, lon: -104.7006 },
-        confidence: 0.89,
-        sourceImageTimestamp: "2025-01-30T10:15:00Z",
-        estimatedHeight: "0.8m",
-        status: "Active",
-        priority: 1,
-        description: "Vegetation detected along runway 35L edge, eastern boundary"
+        code: "AFF",
+        name: "USAF Academy Airfield",
+        city: "Colorado Springs, CO",
+        lat: 38.9697, lon: -104.8129,
+        detections: [
+          {
+            id: 101,
+            type: "Vegetation Encroachment",
+            typeShort: "Vegetation Encroachment",
+            icao: "AFF",
+            timestamp: "2025-01-31T13:10:05Z",
+            coordinates: { lat: 38.9692, lon: -104.8134 },
+            confidence: 0.83,
+            sourceImageTimestamp: "2025-01-31T10:20:00Z",
+            estimatedHeight: "0.4m",
+            status: "Active",
+            priority: 1,
+            description: "Vegetation detected near runway edge in midfield segment"
+          }
+        ]
       },
       {
-        id: 2,
-        type: "Vertical Obstruction",
-        typeShort: "Vertical Obstruction",
-        icao: "KCOS",
-        timestamp: "2025-01-29T09:45:32Z",
-        coordinates: { lat: 38.8038, lon: -104.7012 },
-        confidence: 0.92,
-        sourceImageTimestamp: "2025-01-29T08:30:00Z",
-        estimatedHeight: "2.3m",
-        status: "Active",
-        priority: 2,
-        description: "Equipment detected in approach clear zone, runway 17R"
+        code: "77CO",
+        name: "Meadow Lake (Private)",
+        city: "Falcon, CO",
+        lat: 39.0142, lon: -104.6200,
+        detections: [
+          {
+            id: 201,
+            type: "Vertical Obstruction",
+            typeShort: "Vertical Obstruction",
+            icao: "77CO",
+            timestamp: "2025-01-30T18:05:22Z",
+            coordinates: { lat: 39.0137, lon: -104.6190 },
+            confidence: 0.90,
+            sourceImageTimestamp: "2025-01-30T16:40:00Z",
+            estimatedHeight: "1.9m",
+            status: "Active",
+            priority: 2,
+            description: "New equipment/vehicle observed in approach clear zone"
+          },
+          {
+            id: 202,
+            type: "Pavement Damage",
+            typeShort: "Pavement Damage",
+            icao: "77CO",
+            timestamp: "2025-01-29T09:02:11Z",
+            coordinates: { lat: 39.0148, lon: -104.6211 },
+            confidence: 0.74,
+            sourceImageTimestamp: "2025-01-29T07:55:00Z",
+            estimatedHeight: null,
+            status: "Active",
+            priority: 3,
+            description: "Surface cracking detected near taxiway/runway intersection"
+          }
+        ]
       },
       {
-        id: 3,
-        type: "Pavement Damage",
-        typeShort: "Pavement Damage",
-        icao: "KCOS",
-        timestamp: "2025-01-28T16:12:08Z",
-        coordinates: { lat: 38.8045, lon: -104.7008 },
-        confidence: 0.78,
-        sourceImageTimestamp: "2025-01-28T14:00:00Z",
-        estimatedHeight: null,
-        status: "Active",
-        priority: 3,
-        description: "Surface cracking detected on taxiway Charlie, near intersection with runway 35L"
+        code: "68CO",
+        name: "Airpark (Private)",
+        city: "Colorado Springs, CO",
+        lat: 39.0040, lon: -104.5440,
+        detections: [
+          {
+            id: 301,
+            type: "Building, Threat Systems, and Airfield Structure Changes Detection",
+            typeShort: "Structure Change",
+            icao: "68CO",
+            timestamp: "2025-01-28T21:41:00Z",
+            coordinates: { lat: 39.0046, lon: -104.5451 },
+            confidence: 0.88,
+            sourceImageTimestamp: "2025-01-28T20:10:00Z",
+            estimatedHeight: null,
+            status: "Active",
+            priority: 4,
+            description: "Structure/roof change detected near hangar line"
+          }
+        ]
       },
       {
-        id: 4,
-        type: "Building, Threat Systems, and Airfield Structure Changes Detection",
-        typeShort: "Structure Damage",
-        icao: "KCOS",
-        timestamp: "2025-01-27T11:33:45Z",
-        coordinates: { lat: 38.8048, lon: -104.7015 },
-        confidence: 0.85,
-        sourceImageTimestamp: "2025-01-27T09:45:00Z",
-        estimatedHeight: null,
-        status: "Active",
-        priority: 4,
-        description: "Roof damage detected on Hangar 3, northwest quadrant"
+        code: "CO24",
+        name: "Private Strip",
+        city: "Colorado Springs, CO",
+        lat: 38.9000, lon: -104.8800,
+        detections: [
+          {
+            id: 401,
+            type: "Pavement Damage",
+            typeShort: "Pavement Damage",
+            icao: "CO24",
+            timestamp: "2025-01-27T15:19:45Z",
+            coordinates: { lat: 38.8994, lon: -104.8794 },
+            confidence: 0.79,
+            sourceImageTimestamp: "2025-01-27T13:00:00Z",
+            estimatedHeight: null,
+            status: "Active",
+            priority: 3,
+            description: "Surface degradation detected along primary taxi segment"
+          }
+        ]
+      },
+      {
+        code: "19CO",
+        name: "Private Strip",
+        city: "Colorado Springs, CO",
+        lat: 38.8350, lon: -104.7400,
+        detections: [
+          {
+            id: 501,
+            type: "Vertical Obstruction",
+            typeShort: "Vertical Obstruction",
+            icao: "19CO",
+            timestamp: "2025-01-26T12:00:00Z",
+            coordinates: { lat: 38.8354, lon: -104.7395 },
+            confidence: 0.86,
+            sourceImageTimestamp: "2025-01-26T10:35:00Z",
+            estimatedHeight: "2.1m",
+            status: "Active",
+            priority: 2,
+            description: "Object detected near runway end safety area"
+          }
+        ]
+      },
+      {
+        code: "COS",
+        name: "Colorado Springs Airport",
+        city: "Colorado Springs, CO",
+        lat: 38.8052, lon: -104.7006,
+        detections: [
+          {
+            id: 1,
+            type: "Vegetation Encroachment",
+            typeShort: "Vegetation Encroachment",
+            icao: "KCOS",
+            timestamp: "2025-01-30T14:23:15Z",
+            coordinates: { lat: 38.8052, lon: -104.7006 },
+            confidence: 0.89,
+            sourceImageTimestamp: "2025-01-30T10:15:00Z",
+            estimatedHeight: "0.8m",
+            status: "Active",
+            priority: 1,
+            description: "Vegetation detected along runway 35L edge, eastern boundary"
+          },
+          {
+            id: 2,
+            type: "Vertical Obstruction",
+            typeShort: "Vertical Obstruction",
+            icao: "KCOS",
+            timestamp: "2025-01-29T09:45:32Z",
+            coordinates: { lat: 38.8038, lon: -104.7012 },
+            confidence: 0.92,
+            sourceImageTimestamp: "2025-01-29T08:30:00Z",
+            estimatedHeight: "2.3m",
+            status: "Active",
+            priority: 2,
+            description: "Equipment detected in approach clear zone, runway 17R"
+          },
+          {
+            id: 3,
+            type: "Pavement Damage",
+            typeShort: "Pavement Damage",
+            icao: "KCOS",
+            timestamp: "2025-01-28T16:12:08Z",
+            coordinates: { lat: 38.8045, lon: -104.7008 },
+            confidence: 0.78,
+            sourceImageTimestamp: "2025-01-28T14:00:00Z",
+            estimatedHeight: null,
+            status: "Active",
+            priority: 3,
+            description: "Surface cracking detected on taxiway Charlie, near intersection with runway 35L"
+          },
+          {
+            id: 4,
+            type: "Building, Threat Systems, and Airfield Structure Changes Detection",
+            typeShort: "Structure Damage",
+            icao: "KCOS",
+            timestamp: "2025-01-27T11:33:45Z",
+            coordinates: { lat: 38.8048, lon: -104.7015 },
+            confidence: 0.85,
+            sourceImageTimestamp: "2025-01-27T09:45:00Z",
+            estimatedHeight: null,
+            status: "Active",
+            priority: 4,
+            description: "Roof damage detected on Hangar 3, northwest quadrant"
+          }
+        ]
       }
     ];
+
+    // Flatten detections so modal lookup stays simple
+    const allDetections = airports.flatMap(a => a.detections.map(d => ({ ...d, airportCode: a.code, airportName: a.name })));
 
     // ----------------------------
     // MAP + UI
@@ -344,50 +491,27 @@
       return "#2563eb";
     }
 
-    function createClusterIcon(count) {
+    function createAirportIcon(code) {
       return L.divIcon({
-        className: "custom-marker",
-        html: `
-          <div style="position: relative;">
-            <svg width="35" height="45" viewBox="0 0 35 45" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
-              <path d="M17.5 0C7.835 0 0 7.835 0 17.5C0 30.625 17.5 45 17.5 45C17.5 45 35 30.625 35 17.5C35 7.835 27.165 0 17.5 0Z" fill="#DC2626"/>
-              <circle cx="17.5" cy="17.5" r="8" fill="white"/>
-            </svg>
-            <div style="
-              position: absolute; top: 9px; left: 50%; transform: translateX(-50%);
-              background: #DC2626; color: white; border-radius: 50%;
-              width: 20px; height: 20px; display: flex; align-items: center; justify-content: center;
-              font-size: 12px; font-weight: bold; border: 2px solid white;">
-              ${count}
-            </div>
-          </div>`,
-        iconSize: [35, 45],
-        iconAnchor: [17.5, 45],
-        popupAnchor: [0, -45]
+        className: "airport-icon",
+        html: `<div class="airport-pill"><span class="dot"></span>${escapeHtml(code)}</div>`,
+        iconSize: [64, 24],
+        iconAnchor: [32, 12],
+        popupAnchor: [0, -10]
       });
     }
 
-    function initializeMap() {
-      const cosPosition = [38.8048, -104.7010];
-
-      mapInstance = L.map("map", { zoomControl: true }).setView(cosPosition, 14);
-
-      // Esri World Imagery (your earlier MVP intent)
-      L.tileLayer("https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}", {
-        attribution: "&copy; Esri",
-        maxZoom: 18
-      }).addTo(mapInstance);
-
-      // Single marker for KCOS with "count badge" (simple MVP)
-      const customIcon = createClusterIcon(detections.length);
-
-      const popupContent = `
+    function buildAirportPopup(airport) {
+      const dets = airport.detections || [];
+      const title = `${airport.name} (${airport.code})`;
+      const subtitle = `${dets.length} Active Detection${dets.length !== 1 ? "s" : ""}`;
+      return `
         <div class="popup-container">
-          <h3 class="popup-title">Colorado Springs Airport (KCOS)</h3>
-          <p class="popup-subtitle">${detections.length} Active Detection${detections.length !== 1 ? "s" : ""}</p>
+          <h3 class="popup-title">${escapeHtml(title)}</h3>
+          <p class="popup-subtitle">${escapeHtml(subtitle)}</p>
 
           <div style="max-height: 300px; overflow-y: auto;">
-            ${detections.map(d => `
+            ${dets.length ? dets.map(d => `
               <div class="detection-card" onclick="openModal(${d.id})" role="button" tabindex="0">
                 <div class="detection-header">
                   <span class="detection-type">${escapeHtml(d.typeShort)}</span>
@@ -399,31 +523,124 @@
                   <button class="view-btn" onclick="event.stopPropagation(); openModal(${d.id})">View Details →</button>
                 </div>
               </div>
-            `).join("")}
+            `).join("") : `<div style="color:#64748b;font-size:0.85rem;">No active detections.</div>`}
           </div>
         </div>
       `;
+    }
 
-      L.marker(cosPosition, { icon: customIcon })
-        .addTo(mapInstance)
-        .bindPopup(popupContent, { maxWidth: 420 });
+    // Legend: show on hover/tap, hide on mouseout/tap-away
+    let legendHideTimer = null;
 
-      document.getElementById("current-date").textContent = new Date().toISOString().split("T")[0];
+    function renderLegendForAirport(airport) {
+      const legend = document.getElementById("legend");
+      if (!legend) return;
+
+      const dets = airport.detections || [];
+      const counts = { 1: 0, 2: 0, 3: 0, 4: 0 };
+      dets.forEach(d => counts[d.priority] = (counts[d.priority] || 0) + 1);
+
+      const lastUpdate = new Date().toISOString().split("T")[0];
+
+      legend.innerHTML = `
+        <h4>Detection Priorities — ${escapeHtml(airport.code)}</h4>
+
+        <div class="legend-kv"><span><strong>Airport:</strong></span><span>${escapeHtml(airport.name)}</span></div>
+        <div class="legend-kv"><span><strong>City:</strong></span><span>${escapeHtml(airport.city || "")}</span></div>
+
+        <div style="margin-top: 0.75rem;">
+          <div class="legend-item">
+            <div class="legend-color" style="background: #dc2626;"></div>
+            <span>P1 (Critical): ${counts[1]} — Vegetation Encroachment</span>
+          </div>
+          <div class="legend-item">
+            <div class="legend-color" style="background: #ea580c;"></div>
+            <span>P2 (High): ${counts[2]} — Vertical Obstructions</span>
+          </div>
+          <div class="legend-item">
+            <div class="legend-color" style="background: #ca8a04;"></div>
+            <span>P3 (Moderate): ${counts[3]} — Pavement Damage</span>
+          </div>
+          <div class="legend-item">
+            <div class="legend-color" style="background: #2563eb;"></div>
+            <span>P4 (Low): ${counts[4]} — Structure Changes</span>
+          </div>
+        </div>
+
+        <div class="legend-info">
+          <p><strong>Last Update:</strong> ${lastUpdate}</p>
+          <p><strong>Active Detections:</strong> ${dets.length}</p>
+          <p style="margin-top:0.35rem; color:#475569;">
+            Tip: Hover labels (desktop) or tap labels (mobile) to switch airports.
+          </p>
+        </div>
+      `;
+    }
+
+    function showLegend(airport) {
+      const legend = document.getElementById("legend");
+      if (!legend) return;
+      clearTimeout(legendHideTimer);
+      renderLegendForAirport(airport);
+      legend.classList.remove("hidden");
+    }
+
+    function scheduleHideLegend(delayMs = 250) {
+      const legend = document.getElementById("legend");
+      if (!legend) return;
+      clearTimeout(legendHideTimer);
+      legendHideTimer = setTimeout(() => legend.classList.add("hidden"), delayMs);
+    }
+
+    function initializeMap() {
+      // Start zoomed out by fitting bounds across all airports
+      const points = airports.map(a => [a.lat, a.lon]);
+      const bounds = L.latLngBounds(points);
+
+      mapInstance = L.map("map", { zoomControl: true });
+      mapInstance.fitBounds(bounds.pad(0.20)); // <- zoomed out a bit, tweak pad if desired
+
+      // Esri World Imagery
+      L.tileLayer("https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}", {
+        attribution: "&copy; Esri",
+        maxZoom: 18
+      }).addTo(mapInstance);
+
+      // Add each airport label pin
+      airports.forEach(airport => {
+        const icon = createAirportIcon(airport.code);
+
+        const marker = L.marker([airport.lat, airport.lon], { icon }).addTo(mapInstance);
+
+        // Hover show legend (desktop)
+        marker.on("mouseover", () => showLegend(airport));
+        marker.on("mouseout", () => scheduleHideLegend(250));
+
+        // Tap/click show legend (mobile & desktop)
+        marker.on("click", () => {
+          showLegend(airport);
+          marker.bindPopup(buildAirportPopup(airport), { maxWidth: 420 }).openPopup();
+          // auto-hide after a short delay if user doesn't keep interacting (mobile-friendly)
+          scheduleHideLegend(6000);
+        });
+      });
+
+      // Hide legend if user taps/clicks on the map (not on markers)
+      mapInstance.on("click", () => scheduleHideLegend(100));
+
       document.getElementById("loading").classList.add("hidden");
     }
 
     // ----------------------------
-    // MODAL + FEEDBACK (Req 2.9 / Req 3 objective)
+    // MODAL + FEEDBACK
     // ----------------------------
     let activeDetectionId = null;
 
     function buildAlertJson(detection, analystId, action, comment) {
-      // This is a "shape" that mirrors Req 2 fields + feedback logging.
-      // In the real system, this is what SAIC would post/store.
-      const payload = {
+      return {
         icao: detection.icao,
         detection_id: detection.id,
-        detection_type: detection.type, // full label
+        detection_type: detection.type,
         detection_timestamp_iso8601: detection.timestamp,
         coordinates_wgs84: {
           lat: detection.coordinates.lat,
@@ -431,7 +648,7 @@
         },
         source_image_timestamp_iso8601: detection.sourceImageTimestamp,
         model_confidence_0_to_1: detection.confidence,
-        link_to_alert_imagery: "https://example.placeholder/alert-imagery/" + detection.id, // MVP placeholder
+        link_to_alert_imagery: "https://example.placeholder/alert-imagery/" + detection.id,
         optional_estimated_height: detection.estimatedHeight || null,
         analyst_feedback: action ? {
           analyst_identifier: analystId || "UNSPECIFIED",
@@ -440,18 +657,16 @@
           feedback_timestamp_iso8601: new Date().toISOString()
         } : null
       };
-
-      return payload;
     }
 
     function openModal(detectionId) {
-      const detection = detections.find(d => d.id === detectionId);
+      const detection = allDetections.find(d => d.id === detectionId);
       if (!detection) return;
 
       activeDetectionId = detectionId;
 
       const priorityClasses = { 1: "priority-1", 2: "priority-2", 3: "priority-3", 4: "priority-4" };
-      document.getElementById("modal-subtitle").textContent = `ICAO: ${detection.icao} | Detection ID: ${detection.id}`;
+      document.getElementById("modal-subtitle").textContent = `Airport: ${detection.airportCode} | Detection ID: ${detection.id}`;
 
       const initialJson = buildAlertJson(detection, "", null, null);
 
@@ -469,6 +684,11 @@
           </div>
 
           <div class="data-grid">
+            <div class="data-item">
+              <div class="data-label">Airport</div>
+              <div class="data-value">${escapeHtml(detection.airportName)} (${escapeHtml(detection.airportCode)})</div>
+            </div>
+
             <div class="data-item">
               <div class="data-label">Detection Type</div>
               <div class="data-value">
@@ -595,7 +815,7 @@
             </div>
 
             <div class="feedback-note">
-              <p style="font-weight: 600; margin-bottom: 0.25rem;">Feedback Logging Notes (MVP approximation of Req 2 Objective):</p>
+              <p style="font-weight: 800; margin-bottom: 0.25rem;">Feedback Logging Notes (MVP approximation of Req 2 Objective):</p>
               <p>
                 • Action is logged with analyst identifier and timestamp<br>
                 • Feedback is attached to the alert record (see JSON preview updating below)<br>
@@ -632,7 +852,7 @@
       const analystId = requireAnalystId();
       if (!analystId) return;
 
-      const detection = detections.find(d => d.id === activeDetectionId);
+      const detection = allDetections.find(d => d.id === activeDetectionId);
       if (!detection) return;
 
       const comment = (document.getElementById("feedback-comment")?.value || "").trim() || null;
@@ -640,15 +860,13 @@
       const updated = buildAlertJson(detection, analystId, action, comment);
       const pretty = JSON.stringify(updated, null, 2);
 
-      // Update the JSON panes
       const jsonAfter = document.getElementById("alert-json-after");
       if (jsonAfter) jsonAfter.textContent = pretty;
 
-      // Success banner
       document.getElementById("feedback-content").insertAdjacentHTML(
         "afterbegin",
         `<div class="feedback-success" style="margin-bottom: 1rem;">
-          <p style="color: #166534; font-weight: 700; font-size: 1rem;">✓ Feedback Logged</p>
+          <p style="color: #166534; font-weight: 900; font-size: 1rem;">✓ Feedback Logged</p>
           <p style="color: #16a34a; font-size: 0.875rem; margin-top: 0.35rem;">
             Action: <span style="font-family: monospace;">${escapeHtml(action)}</span> • Analyst: <span style="font-family: monospace;">${escapeHtml(analystId)}</span>
           </p>
@@ -662,21 +880,17 @@
         alert("Please enter a comment before submitting.");
         return;
       }
-      // Treat comment-only as an action for logging
       submitFeedback("comment_added");
     }
 
-    // Close modal if clicking outside content
     document.getElementById("modal").addEventListener("click", function(e) {
       if (e.target === this) closeModal();
     });
 
-    // Escape to close modal
     document.addEventListener("keydown", function(e) {
       if (e.key === "Escape") closeModal();
     });
 
-    // Simple HTML escaping for injected strings
     function escapeHtml(str) {
       return String(str)
         .replaceAll("&", "&amp;")
@@ -693,8 +907,6 @@
       try {
         setLoadingStatus("Checking libraries…");
         await loadLeaflet();
-
-        // If Leaflet is blocked by policy, you’ll hit the catch block.
         setLoadingStatus("Initializing map…");
         initializeMap();
       } catch (err) {
@@ -724,4 +936,3 @@ ${escapeHtml(err.message)}
   </script>
 </body>
 </html>
-
