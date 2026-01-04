@@ -460,12 +460,17 @@
     // OurAirports publishes downloadable airport datasets (including airports.csv).
     // For the demo, we fetch+parse just enough to get lat/lon for your selected idents. :contentReference[oaicite:2]{index=2}
     async function loadAirportsFromOurAirportsOrFallback() {
-      // If fetch is blocked, we fall back to the hardcoded list.
-      const url = "https://ourairports.com/data/airports.csv";
+      // Try multiple sources for airport data, fallback chain
+      const sources = [
+        "https://raw.githubusercontent.com/davidmegginson/ourairports-data/main/airports.csv",
+        "https://ourairports.com/data/airports.csv"
+      ];
+
       setLoadingStatus("Loading airport locations (OurAirports)…");
 
-      try {
-        const resp = await fetch(url, { mode: "cors", cache: "force-cache" });
+      for (const url of sources) {
+        try {
+          const resp = await fetch(url, { mode: "cors", cache: "force-cache" });
         if (!resp.ok) throw new Error(`OurAirports fetch failed: HTTP ${resp.status}`);
         const text = await resp.text();
 
