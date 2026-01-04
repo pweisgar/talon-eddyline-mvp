@@ -25,21 +25,39 @@
 
     #map { flex: 1; position: relative; background: #334155; }
 
-    /* Dynamic legend (only shows on hover) */
-    .legend { position: absolute; bottom: 20px; left: 20px; background: white; padding: 1rem; border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.2); z-index: 1000; max-width: 320px; }
-    .legend.hidden { display: none; }
-    .legend h4 { font-size: 0.875rem; font-weight: bold; margin-bottom: 0.5rem; color: #1e293b; }
-    .legend-sub { font-size: 0.75rem; color: #64748b; margin-bottom: 0.75rem; }
-    .legend-item { display: flex; align-items: center; gap: 0.5rem; font-size: 0.75rem; margin-bottom: 0.5rem; }
-    .legend-color { width: 12px; height: 12px; border-radius: 2px; }
-    .legend-info { margin-top: 0.75rem; padding-top: 0.75rem; border-top: 1px solid #e2e8f0; font-size: 0.75rem; color: #64748b; }
+    /* Hover panel (replaces always-on legend) */
+    .airport-panel {
+      position: absolute;
+      bottom: 20px;
+      left: 20px;
+      background: white;
+      padding: 1rem;
+      border-radius: 8px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+      z-index: 1000;
+      width: 320px;
+      display: none;
+    }
+    .airport-panel.active { display: block; }
+    .panel-title { font-size: 0.95rem; font-weight: 800; color: #1e293b; margin-bottom: 0.25rem; }
+    .panel-subtitle { font-size: 0.8rem; color: #64748b; margin-bottom: 0.75rem; }
+    .panel-row { display: flex; align-items: center; gap: 0.5rem; font-size: 0.8rem; margin-bottom: 0.45rem; color: #0f172a; }
+    .swatch { width: 12px; height: 12px; border-radius: 3px; }
+    .panel-footer {
+      margin-top: 0.75rem;
+      padding-top: 0.75rem;
+      border-top: 1px solid #e2e8f0;
+      font-size: 0.75rem;
+      color: #64748b;
+      display: grid;
+      gap: 0.25rem;
+    }
 
     /* Leaflet popup styling */
     .leaflet-popup-content-wrapper { border-radius: 8px; padding: 0; overflow: hidden; }
     .leaflet-popup-content { margin: 0; width: 380px !important; }
-
     .popup-container { padding: 1rem; }
-    .popup-title { font-size: 1.125rem; font-weight: bold; color: #1e293b; margin-bottom: 0.25rem; }
+    .popup-title { font-size: 1.125rem; font-weight: bold; color: #1e293b; margin-bottom: 0.5rem; }
     .popup-subtitle { font-size: 0.875rem; color: #64748b; margin-bottom: 1rem; }
 
     .detection-card { border: 1px solid #e2e8f0; border-radius: 6px; padding: 0.75rem; margin-bottom: 0.5rem; cursor: pointer; transition: all 0.2s; }
@@ -53,15 +71,14 @@
     .view-btn { background: #2563eb; color: white; border: none; padding: 0.25rem 0.75rem; border-radius: 4px; font-size: 0.75rem; font-weight: 600; cursor: pointer; transition: background 0.2s; }
     .view-btn:hover { background: #1d4ed8; }
 
+    /* Modal (unchanged from your current working version) */
     .modal { display: none; position: fixed; inset: 0; background: rgba(0, 0, 0, 0.5); z-index: 10000; padding: 2rem; overflow-y: auto; }
     .modal.active { display: flex; align-items: center; justify-content: center; }
-
     .modal-content { background: white; border-radius: 8px; max-width: 1100px; width: 100%; max-height: 90vh; overflow-y: auto; box-shadow: 0 20px 50px rgba(0,0,0,0.3); }
     .modal-header { background: #1e293b; color: white; padding: 1.5rem; position: sticky; top: 0; z-index: 10; display: flex; justify-content: space-between; align-items: start; gap: 1rem; }
     .modal-header h2 { font-size: 1.5rem; margin-bottom: 0.5rem; }
     .modal-header p { font-size: 0.875rem; color: #cbd5e1; }
     .close-btn { background: none; border: none; color: white; font-size: 2rem; cursor: pointer; line-height: 1; padding: 0; width: 32px; height: 32px; }
-
     .modal-body { padding: 2rem; }
     .section { margin-bottom: 2rem; }
     .section-title { font-size: 1.25rem; font-weight: bold; color: #1e293b; border-bottom: 2px solid #e2e8f0; padding-bottom: 0.5rem; margin-bottom: 1rem; }
@@ -109,9 +126,7 @@
 
     .comment-section { border-top: 1px solid #e2e8f0; padding-top: 1rem; margin-top: 1rem; }
     .comment-label { display: block; font-size: 0.875rem; font-weight: 600; color: #1e293b; margin-bottom: 0.5rem; }
-
     textarea { width: 100%; padding: 0.75rem; border: 1px solid #e2e8f0; border-radius: 6px; font-size: 0.875rem; resize: vertical; font-family: inherit; }
-
     .btn-submit { background: #2563eb; color: white; padding: 0.5rem 1.5rem; border: none; border-radius: 6px; font-weight: 600; cursor: pointer; margin-top: 0.5rem; }
     .btn-submit:hover { background: #1d4ed8; }
 
@@ -134,6 +149,25 @@
       border: 1px solid #1f2937;
     }
 
+    /* Airport pill markers (FlightAware-style) */
+    .airport-pill {
+      background: rgba(15, 23, 42, 0.92);
+      color: #fff;
+      border: 1px solid rgba(255,255,255,0.25);
+      border-radius: 8px;
+      padding: 6px 10px;
+      font-weight: 800;
+      font-size: 14px;
+      letter-spacing: 0.3px;
+      box-shadow: 0 6px 16px rgba(0,0,0,0.25);
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      user-select: none;
+      white-space: nowrap;
+    }
+    .pill-dot { width: 8px; height: 8px; border-radius: 50%; background: #94a3b8; }
+
     @media (max-width: 768px) {
       .image-grid { grid-template-columns: 1fr; }
       .data-grid { grid-template-columns: 1fr; }
@@ -141,6 +175,7 @@
       .btn { min-width: 100%; }
       .modal { padding: 1rem; }
       .modal-body { padding: 1.25rem; }
+      .airport-panel { width: calc(100% - 40px); }
     }
   </style>
 </head>
@@ -170,8 +205,8 @@
 
   <div id="map"></div>
 
-  <!-- Dynamic legend (appears only when hovering an airport) -->
-  <div id="hover-legend" class="legend hidden"></div>
+  <!-- Hover-only panel (per-airport priorities) -->
+  <div id="airport-panel" class="airport-panel" aria-live="polite"></div>
 
   <div id="modal" class="modal">
     <div class="modal-content">
@@ -251,67 +286,56 @@
     }
 
     // ----------------------------
-    // DATA MODEL: airports[] each with detections[]
-    // NOTE: Replace coords with your authoritative source.
+    // DEMO CONFIG
     // ----------------------------
-    const airports = [
-      {
-        icao: "KCOS",
-        label: "COS",
-        name: "Colorado Springs Airport",
-        coordinates: { lat: 38.8058, lon: -104.7006 },
-        detections: [
-          { id: 101, type: "Vegetation Encroachment", typeShort: "Vegetation Encroachment", timestamp: "2025-01-30T14:23:15Z", coordinates: { lat: 38.8052, lon: -104.7006 }, confidence: 0.89, sourceImageTimestamp: "2025-01-30T10:15:00Z", estimatedHeight: "0.8m", status: "Active", priority: 1, description: "Vegetation detected along runway 35L edge, eastern boundary" },
-          { id: 102, type: "Vertical Obstruction", typeShort: "Vertical Obstruction", timestamp: "2025-01-29T09:45:32Z", coordinates: { lat: 38.8038, lon: -104.7012 }, confidence: 0.92, sourceImageTimestamp: "2025-01-29T08:30:00Z", estimatedHeight: "2.3m", status: "Active", priority: 2, description: "Equipment detected in approach clear zone, runway 17R" },
-          { id: 103, type: "Pavement Damage", typeShort: "Pavement Damage", timestamp: "2025-01-28T16:12:08Z", coordinates: { lat: 38.8045, lon: -104.7008 }, confidence: 0.78, sourceImageTimestamp: "2025-01-28T14:00:00Z", estimatedHeight: null, status: "Active", priority: 3, description: "Surface cracking detected on taxiway Charlie, near intersection with runway 35L" },
-          { id: 104, type: "Building, Threat Systems, and Airfield Structure Changes Detection", typeShort: "Structure Damage", timestamp: "2025-01-27T11:33:45Z", coordinates: { lat: 38.8048, lon: -104.7015 }, confidence: 0.85, sourceImageTimestamp: "2025-01-27T09:45:00Z", estimatedHeight: null, status: "Active", priority: 4, description: "Roof damage detected on Hangar 3, northwest quadrant" }
-        ]
-      },
+    // Airports we want visible/hoverable in the demo (FlightAware-style pills).
+    // NOTE: "COS" in the screenshot is KCOS.
+    const DEMO_AIRPORT_IDENTS = ["KCOS", "KAFF", "77CO", "68CO", "CO24", "19CO"];
 
-      // Demo airports (coords are placeholders — replace with authoritative values)
-      {
-        icao: "KAFF",
-        label: "AFF",
-        name: "USAF Academy Airfield",
-        coordinates: { lat: 38.9697, lon: -104.8127 },
-        detections: [
-          { id: 201, type: "Vegetation Encroachment", typeShort: "Vegetation Encroachment", timestamp: "2025-01-30T12:05:10Z", coordinates: { lat: 38.9694, lon: -104.8122 }, confidence: 0.87, sourceImageTimestamp: "2025-01-30T09:10:00Z", estimatedHeight: "0.5m", status: "Active", priority: 1, description: "Vegetation detected near runway edge" }
-        ]
-      },
-      {
-        icao: "K77CO",
-        label: "77CO",
-        name: "Demo Airfield 77CO",
-        coordinates: { lat: 38.9130, lon: -104.7600 },
-        detections: [
-          { id: 301, type: "Pavement Damage", typeShort: "Pavement Damage", timestamp: "2025-01-29T18:22:00Z", coordinates: { lat: 38.9128, lon: -104.7598 }, confidence: 0.81, sourceImageTimestamp: "2025-01-29T14:00:00Z", estimatedHeight: null, status: "Active", priority: 3, description: "Cracking detected on taxi surface" },
-          { id: 302, type: "Vertical Obstruction", typeShort: "Vertical Obstruction", timestamp: "2025-01-29T18:25:00Z", coordinates: { lat: 38.9132, lon: -104.7602 }, confidence: 0.90, sourceImageTimestamp: "2025-01-29T14:00:00Z", estimatedHeight: "1.7m", status: "Active", priority: 2, description: "Object detected within approach corridor" }
-        ]
-      },
-      {
-        icao: "K68CO",
-        label: "68CO",
-        name: "Demo Airfield 68CO",
-        coordinates: { lat: 38.8920, lon: -104.6730 },
-        detections: [
-          { id: 401, type: "Building, Threat Systems, and Airfield Structure Changes Detection", typeShort: "Structure Damage", timestamp: "2025-01-28T07:12:00Z", coordinates: { lat: 38.8919, lon: -104.6728 }, confidence: 0.84, sourceImageTimestamp: "2025-01-28T06:00:00Z", estimatedHeight: null, status: "Active", priority: 4, description: "Structure change detected near hangar line" }
-        ]
-      }
+    // Fallback coords if OurAirports CSV fetch is blocked by CORS/network policy.
+    // You can tweak these if you want the pills spaced more like the screenshot.
+    const FALLBACK_AIRPORTS = [
+      { ident: "KAFF", label: "AFF", name: "Air Force Academy Airfield", lat: 38.9697, lon: -104.8128 },
+      { ident: "77CO", label: "77CO", name: "Private Airstrip (Demo)", lat: 38.9150, lon: -104.8100 },
+      { ident: "68CO", label: "68CO", name: "Private Airstrip (Demo)", lat: 38.9300, lon: -104.7400 },
+      { ident: "CO24", label: "CO24", name: "Private Airstrip (Demo)", lat: 38.8850, lon: -104.9000 },
+      { ident: "19CO", label: "19CO", name: "Heliport/Airstrip (Demo)", lat: 38.8650, lon: -104.8200 },
+      { ident: "KCOS", label: "COS", name: "City of Colorado Springs Municipal Airport", lat: 38.8058, lon: -104.7008 }
     ];
 
-    // Flatten list for modal lookups by ID
-    function findDetectionById(id) {
-      for (const a of airports) {
-        const d = a.detections.find(x => x.id === id);
-        if (d) return { airport: a, detection: d };
-      }
-      return null;
-    }
+    // ----------------------------
+    // DETECTIONS (now tied to airports)
+    // ----------------------------
+    // Add airport_ident so we can show different priority mixes per airport on hover.
+    const detections = [
+      // KCOS: mix of priorities (existing examples)
+      { id: 1, airport_ident: "KCOS", type: "Vegetation Encroachment", typeShort: "Vegetation Encroachment", icao: "KCOS", timestamp: "2025-01-30T14:23:15Z", coordinates: { lat: 38.8052, lon: -104.7006 }, confidence: 0.89, sourceImageTimestamp: "2025-01-30T10:15:00Z", estimatedHeight: "0.8m", status: "Active", priority: 1, description: "Vegetation detected along runway 35L edge, eastern boundary" },
+      { id: 2, airport_ident: "KCOS", type: "Vertical Obstruction", typeShort: "Vertical Obstruction", icao: "KCOS", timestamp: "2025-01-29T09:45:32Z", coordinates: { lat: 38.8038, lon: -104.7012 }, confidence: 0.92, sourceImageTimestamp: "2025-01-29T08:30:00Z", estimatedHeight: "2.3m", status: "Active", priority: 2, description: "Equipment detected in approach clear zone, runway 17R" },
+      { id: 3, airport_ident: "KCOS", type: "Pavement Damage", typeShort: "Pavement Damage", icao: "KCOS", timestamp: "2025-01-28T16:12:08Z", coordinates: { lat: 38.8045, lon: -104.7008 }, confidence: 0.78, sourceImageTimestamp: "2025-01-28T14:00:00Z", estimatedHeight: null, status: "Active", priority: 3, description: "Surface cracking detected on taxiway Charlie, near intersection with runway 35L" },
+
+      // KAFF: your example “only one detection”
+      { id: 10, airport_ident: "KAFF", type: "Vegetation Encroachment", typeShort: "Vegetation Encroachment", icao: "KAFF", timestamp: "2025-01-30T18:05:00Z", coordinates: { lat: 38.9690, lon: -104.8121 }, confidence: 0.84, sourceImageTimestamp: "2025-01-30T16:10:00Z", estimatedHeight: "0.5m", status: "Active", priority: 1, description: "Vegetation detected near runway edge, north segment" },
+
+      // CO24: show only P2 + P4
+      { id: 20, airport_ident: "CO24", type: "Vertical Obstruction", typeShort: "Vertical Obstruction", icao: "CO24", timestamp: "2025-01-26T11:10:00Z", coordinates: { lat: 38.8853, lon: -104.9005 }, confidence: 0.90, sourceImageTimestamp: "2025-01-26T09:30:00Z", estimatedHeight: "1.7m", status: "Active", priority: 2, description: "Object detected in clear zone near threshold" },
+      { id: 21, airport_ident: "CO24", type: "Building, Threat Systems, and Airfield Structure Changes Detection", typeShort: "Structure Damage", icao: "CO24", timestamp: "2025-01-26T11:12:00Z", coordinates: { lat: 38.8850, lon: -104.9000 }, confidence: 0.81, sourceImageTimestamp: "2025-01-26T09:30:00Z", estimatedHeight: null, status: "Active", priority: 4, description: "Structural change detected on small outbuilding roof" },
+
+      // 77CO: show only P3
+      { id: 30, airport_ident: "77CO", type: "Pavement Damage", typeShort: "Pavement Damage", icao: "77CO", timestamp: "2025-01-25T15:22:00Z", coordinates: { lat: 38.9152, lon: -104.8102 }, confidence: 0.76, sourceImageTimestamp: "2025-01-25T13:10:00Z", estimatedHeight: null, status: "Active", priority: 3, description: "Surface anomaly detected on primary taxi surface" },
+
+      // 68CO: show only P2
+      { id: 40, airport_ident: "68CO", type: "Vertical Obstruction", typeShort: "Vertical Obstruction", icao: "68CO", timestamp: "2025-01-24T08:40:00Z", coordinates: { lat: 38.9302, lon: -104.7402 }, confidence: 0.88, sourceImageTimestamp: "2025-01-24T07:05:00Z", estimatedHeight: "2.0m", status: "Active", priority: 2, description: "Equipment detected near approach surface" },
+
+      // 19CO: show none or one (here: none -> panel will show “No active detections”)
+      // (leave empty on purpose for the “hide zeros” behavior)
+    ];
 
     // ----------------------------
     // MAP + UI
     // ----------------------------
     let mapInstance = null;
+    let airportMarkers = [];
+    let hoverHideTimer = null;
 
     function priorityColor(priority) {
       if (priority === 1) return "#dc2626";
@@ -320,81 +344,99 @@
       return "#2563eb";
     }
 
-    function createAirportPillIcon(text) {
+    function makeAirportPillIcon(label, hasDetections) {
+      const dotColor = hasDetections ? "#22c55e" : "#94a3b8";
       return L.divIcon({
-        className: "airport-pill",
-        html: `
-          <div style="
-            background:#0f172a;
-            color:#ffffff;
-            padding:6px 10px;
-            border-radius:8px;
-            font-weight:700;
-            font-size:12px;
-            letter-spacing:0.5px;
-            box-shadow:0 6px 16px rgba(0,0,0,0.25);
-            border:1px solid rgba(255,255,255,0.15);
-            ">
-            ${escapeHtml(text)}
-          </div>
-        `,
-        iconSize: null,
-        iconAnchor: [18, 14],
-        popupAnchor: [0, -14]
+        className: "",
+        html: `<div class="airport-pill"><span class="pill-dot" style="background:${dotColor};"></span>${escapeHtml(label)}</div>`,
+        iconSize: null
       });
     }
 
-    function countsByPriority(detections) {
+    function detectionsForAirport(ident) {
+      return detections.filter(d => d.airport_ident === ident);
+    }
+
+    function countsByPriority(dets) {
       const counts = { 1: 0, 2: 0, 3: 0, 4: 0 };
-      for (const d of detections) counts[d.priority] = (counts[d.priority] || 0) + 1;
+      for (const d of dets) counts[d.priority] = (counts[d.priority] || 0) + 1;
       return counts;
     }
 
-    function renderHoverLegend(airport) {
-      const el = document.getElementById("hover-legend");
-      if (!el) return;
+    function showAirportPanel(airport) {
+      const panel = document.getElementById("airport-panel");
+      if (!panel) return;
 
-      const counts = countsByPriority(airport.detections);
+      if (hoverHideTimer) {
+        clearTimeout(hoverHideTimer);
+        hoverHideTimer = null;
+      }
 
-      // Only show priorities that exist (hide zeros)
+      const dets = detectionsForAirport(airport.ident);
+      const counts = countsByPriority(dets);
+      const total = dets.length;
+
       const rows = [];
-      if (counts[1] > 0) rows.push({ p: 1, label: "Vegetation Encroachment", color: "#dc2626", count: counts[1] });
-      if (counts[2] > 0) rows.push({ p: 2, label: "Vertical Obstructions", color: "#ea580c", count: counts[2] });
-      if (counts[3] > 0) rows.push({ p: 3, label: "Pavement Damage", color: "#ca8a04", count: counts[3] });
-      if (counts[4] > 0) rows.push({ p: 4, label: "Structure Damage", color: "#2563eb", count: counts[4] });
-
-      el.innerHTML = `
-        <h4>${escapeHtml(airport.label)} Priorities</h4>
-        <div class="legend-sub">${escapeHtml(airport.name)} • ${escapeHtml(airport.icao)}</div>
-        ${rows.map(r => `
-          <div class="legend-item">
-            <div class="legend-color" style="background:${r.color};"></div>
-            <span>Priority ${r.p}: ${escapeHtml(r.label)} <strong style="margin-left:6px;">(${r.count})</strong></span>
-          </div>
-        `).join("")}
-        <div class="legend-info">
-          <p><strong>Last Update:</strong> <span>${new Date().toISOString().split("T")[0]}</span></p>
-          <p><strong>Active Detections:</strong> ${airport.detections.length}</p>
+      const row = (p, label) => `
+        <div class="panel-row">
+          <div class="swatch" style="background:${priorityColor(p)};"></div>
+          <div><strong>P${p}</strong> ${escapeHtml(label)}: <strong>${counts[p]}</strong></div>
         </div>
       `;
-      el.classList.remove("hidden");
+
+      // Hide zeros (your requirement #2)
+      if (counts[1] > 0) rows.push(row(1, "Vegetation Encroachment"));
+      if (counts[2] > 0) rows.push(row(2, "Vertical Obstructions"));
+      if (counts[3] > 0) rows.push(row(3, "Pavement Damage"));
+      if (counts[4] > 0) rows.push(row(4, "Structure Changes"));
+
+      const label = airport.label || airport.ident;
+      panel.innerHTML = `
+        <div class="panel-title">${escapeHtml(label)} — Detection Priorities</div>
+        <div class="panel-subtitle">${escapeHtml(airport.name || "Airport")} • Active detections: <strong>${total}</strong></div>
+        ${
+          rows.length
+            ? rows.join("")
+            : `<div class="panel-row"><div class="swatch" style="background:#94a3b8;"></div><div><strong>No active detections</strong></div></div>`
+        }
+        <div class="panel-footer">
+          <div><strong>Ident:</strong> ${escapeHtml(airport.ident)}</div>
+          <div><strong>Lat/Lon:</strong> ${airport.lat.toFixed(4)}, ${airport.lon.toFixed(4)}</div>
+          <div><strong>Last Update:</strong> ${new Date().toISOString().split("T")[0]}</div>
+        </div>
+      `;
+      panel.classList.add("active");
     }
 
-    function hideHoverLegend() {
-      const el = document.getElementById("hover-legend");
-      if (!el) return;
-      el.classList.add("hidden");
-      el.innerHTML = "";
+    function hideAirportPanelSoon() {
+      const panel = document.getElementById("airport-panel");
+      if (!panel) return;
+      hoverHideTimer = setTimeout(() => {
+        panel.classList.remove("active");
+      }, 200);
     }
 
-    function popupHtmlForAirport(airport) {
-      const detections = airport.detections;
+    function buildAirportPopupContent(airport) {
+      const dets = detectionsForAirport(airport.ident);
+
+      // For the demo: if no detections, keep popup simple
+      if (!dets.length) {
+        return `
+          <div class="popup-container">
+            <h3 class="popup-title">${escapeHtml(airport.name || airport.ident)}</h3>
+            <p class="popup-subtitle">0 Active Detections</p>
+            <div style="font-size:0.85rem; color:#64748b;">Hover shows detection priorities. Click another airport to compare.</div>
+          </div>
+        `;
+      }
+
       return `
         <div class="popup-container">
-          <h3 class="popup-title">${escapeHtml(airport.name)} (${escapeHtml(airport.label)})</h3>
-          <p class="popup-subtitle">${detections.length} Active Detection${detections.length !== 1 ? "s" : ""}</p>
+          <h3 class="popup-title">${escapeHtml(airport.name || airport.ident)} (${escapeHtml(airport.label || airport.ident)})</h3>
+          <p class="popup-subtitle">${dets.length} Active Detection${dets.length !== 1 ? "s" : ""}</p>
+
           <div style="max-height: 300px; overflow-y: auto;">
-            ${detections.map(d => `
+            ${dets.map(d => `
               <div class="detection-card" onclick="openModal(${d.id})" role="button" tabindex="0">
                 <div class="detection-header">
                   <span class="detection-type">${escapeHtml(d.typeShort)}</span>
@@ -412,59 +454,156 @@
       `;
     }
 
-    function initializeMap() {
-      // Start zoomed out more (FlightAware-like region view)
-      const startCenter = [38.88, -104.78];
-      const startZoom = 11;
+    // ----------------------------
+    // OurAirports integration (airports.csv)
+    // ----------------------------
+    // OurAirports publishes downloadable airport datasets (including airports.csv).
+    // For the demo, we fetch+parse just enough to get lat/lon for your selected idents. :contentReference[oaicite:2]{index=2}
+    async function loadAirportsFromOurAirportsOrFallback() {
+      // If fetch is blocked, we fall back to the hardcoded list.
+      const url = "https://ourairports.com/data/airports.csv";
+      setLoadingStatus("Loading airport locations (OurAirports)…");
 
-      mapInstance = L.map("map", { zoomControl: true }).setView(startCenter, startZoom);
+      try {
+        const resp = await fetch(url, { mode: "cors", cache: "force-cache" });
+        if (!resp.ok) throw new Error(`OurAirports fetch failed: HTTP ${resp.status}`);
+        const text = await resp.text();
+
+        // Parse minimal CSV (handles quoted fields)
+        const lines = text.split(/\r?\n/).filter(Boolean);
+        const header = parseCsvLine(lines[0]);
+        const idx = {
+          ident: header.indexOf("ident"),
+          name: header.indexOf("name"),
+          lat: header.indexOf("latitude_deg"),
+          lon: header.indexOf("longitude_deg")
+        };
+        if (idx.ident < 0 || idx.lat < 0 || idx.lon < 0) throw new Error("OurAirports CSV schema unexpected.");
+
+        const want = new Set(DEMO_AIRPORT_IDENTS);
+        const found = [];
+
+        for (let i = 1; i < lines.length; i++) {
+          const row = parseCsvLine(lines[i]);
+          const ident = row[idx.ident];
+          if (!want.has(ident)) continue;
+
+          const lat = Number(row[idx.lat]);
+          const lon = Number(row[idx.lon]);
+          if (!Number.isFinite(lat) || !Number.isFinite(lon)) continue;
+
+          // Label mapping to match FlightAware screenshot (COS vs KCOS, AFF vs KAFF)
+          const label = ident === "KCOS" ? "COS" : (ident === "KAFF" ? "AFF" : ident);
+
+          found.push({
+            ident,
+            label,
+            name: row[idx.name] || ident,
+            lat,
+            lon
+          });
+
+          want.delete(ident);
+          if (want.size === 0) break;
+        }
+
+        // If we didn't find everything, merge missing from fallback
+        if (want.size > 0) {
+          const fallbackMissing = FALLBACK_AIRPORTS.filter(a => want.has(a.ident));
+          found.push(...fallbackMissing);
+        }
+
+        // Stable ordering
+        found.sort((a, b) => DEMO_AIRPORT_IDENTS.indexOf(a.ident) - DEMO_AIRPORT_IDENTS.indexOf(b.ident));
+        return found;
+
+      } catch (err) {
+        console.warn("OurAirports integration failed; using fallback coords.", err);
+        setLoadingStatus("OurAirports blocked; using fallback airport locations…");
+        return FALLBACK_AIRPORTS.slice();
+      }
+    }
+
+    function parseCsvLine(line) {
+      const out = [];
+      let cur = "";
+      let inQuotes = false;
+
+      for (let i = 0; i < line.length; i++) {
+        const ch = line[i];
+
+        if (ch === '"' && line[i + 1] === '"') { // escaped quote
+          cur += '"';
+          i++;
+          continue;
+        }
+        if (ch === '"') {
+          inQuotes = !inQuotes;
+          continue;
+        }
+        if (ch === "," && !inQuotes) {
+          out.push(cur);
+          cur = "";
+          continue;
+        }
+        cur += ch;
+      }
+      out.push(cur);
+      return out;
+    }
+
+    // ----------------------------
+    // Initialize map (zoomed out + multiple airports)
+    // ----------------------------
+    async function initializeMap() {
+      // Start zoomed out more than before; we then fitBounds to airports.
+      const defaultCenter = [38.90, -104.82];
+      mapInstance = L.map("map", { zoomControl: true }).setView(defaultCenter, 11);
 
       L.tileLayer("https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}", {
         attribution: "&copy; Esri",
         maxZoom: 18
       }).addTo(mapInstance);
 
-      // Add multiple airport pills
+      const airports = await loadAirportsFromOurAirportsOrFallback();
+
+      // Clear any existing markers
+      airportMarkers.forEach(m => m.remove());
+      airportMarkers = [];
+
       for (const a of airports) {
-        const icon = createAirportPillIcon(a.label);
-        const marker = L.marker([a.coordinates.lat, a.coordinates.lon], { icon }).addTo(mapInstance);
+        const dets = detectionsForAirport(a.ident);
+        const icon = makeAirportPillIcon(a.label || a.ident, dets.length > 0);
 
-        // Hover = show legend + show a quick popup (no click required)
-        marker.on("mouseover", () => {
-          renderHoverLegend(a);
-          marker.bindPopup(popupHtmlForAirport(a), { maxWidth: 420 }).openPopup();
-        });
+        const marker = L.marker([a.lat, a.lon], { icon, keyboard: false })
+          .addTo(mapInstance)
+          .bindPopup(buildAirportPopupContent(a), { maxWidth: 420 });
 
-        marker.on("mouseout", () => {
-          hideHoverLegend();
-          marker.closePopup();
-        });
+        marker.on("mouseover", () => showAirportPanel(a));
+        marker.on("mouseout", () => hideAirportPanelSoon());
 
-        // Click = keep popup open (more controllable during demo)
-        marker.on("click", () => {
-          renderHoverLegend(a);
-          marker.bindPopup(popupHtmlForAirport(a), { maxWidth: 420 }).openPopup();
-        });
+        airportMarkers.push(marker);
       }
+
+      // Fit the view so all demo airports are visible (best “zoomed out” story).
+      const group = L.featureGroup(airportMarkers);
+      mapInstance.fitBounds(group.getBounds().pad(0.15));
 
       document.getElementById("loading").classList.add("hidden");
     }
 
     // ----------------------------
-    // MODAL + FEEDBACK
+    // MODAL + FEEDBACK (your existing logic, unchanged)
     // ----------------------------
     let activeDetectionId = null;
 
-    function buildAlertJson(detection, analystId, action, comment, airportIcao) {
-      const payload = {
-        icao: airportIcao,
+    function buildAlertJson(detection, analystId, action, comment) {
+      return {
+        icao: detection.icao,
         detection_id: detection.id,
         detection_type: detection.type,
         detection_timestamp_iso8601: detection.timestamp,
-        coordinates_wgs84: {
-          lat: detection.coordinates.lat,
-          lon: detection.coordinates.lon
-        },
+        coordinates_wgs84: { lat: detection.coordinates.lat, lon: detection.coordinates.lon },
         source_image_timestamp_iso8601: detection.sourceImageTimestamp,
         model_confidence_0_to_1: detection.confidence,
         link_to_alert_imagery: "https://example.placeholder/alert-imagery/" + detection.id,
@@ -476,22 +615,17 @@
           feedback_timestamp_iso8601: new Date().toISOString()
         } : null
       };
-      return payload;
     }
 
     function openModal(detectionId) {
-      const found = findDetectionById(detectionId);
-      if (!found) return;
-
-      const airport = found.airport;
-      const detection = found.detection;
-
+      const detection = detections.find(d => d.id === detectionId);
+      if (!detection) return;
       activeDetectionId = detectionId;
 
       const priorityClasses = { 1: "priority-1", 2: "priority-2", 3: "priority-3", 4: "priority-4" };
-      document.getElementById("modal-subtitle").textContent = `ICAO: ${airport.icao} | Detection ID: ${detection.id}`;
+      document.getElementById("modal-subtitle").textContent = `ICAO: ${detection.icao} | Detection ID: ${detection.id}`;
 
-      const initialJson = buildAlertJson(detection, "", null, null, airport.icao);
+      const initialJson = buildAlertJson(detection, "", null, null);
 
       document.getElementById("modal-body").innerHTML = `
         <div class="section">
@@ -670,15 +804,11 @@
       const analystId = requireAnalystId();
       if (!analystId) return;
 
-      const found = findDetectionById(activeDetectionId);
-      if (!found) return;
-
-      const airport = found.airport;
-      const detection = found.detection;
+      const detection = detections.find(d => d.id === activeDetectionId);
+      if (!detection) return;
 
       const comment = (document.getElementById("feedback-comment")?.value || "").trim() || null;
-
-      const updated = buildAlertJson(detection, analystId, action, comment, airport.icao);
+      const updated = buildAlertJson(detection, analystId, action, comment);
       const pretty = JSON.stringify(updated, null, 2);
 
       const jsonAfter = document.getElementById("alert-json-after");
@@ -730,7 +860,22 @@
         await loadLeaflet();
 
         setLoadingStatus("Initializing map…");
-        initializeMap();
+        await initializeMap();
+
+        // Hide panel if cursor leaves the map entirely
+        const mapEl = document.getElementById("map");
+        mapEl.addEventListener("mouseleave", () => {
+          const panel = document.getElementById("airport-panel");
+          panel.classList.remove("active");
+        });
+
+        // Make panel “stick” if hovered (optional, but feels better in demos)
+        const panel = document.getElementById("airport-panel");
+        panel.addEventListener("mouseenter", () => {
+          if (hoverHideTimer) clearTimeout(hoverHideTimer);
+        });
+        panel.addEventListener("mouseleave", () => hideAirportPanelSoon());
+
       } catch (err) {
         console.error(err);
         const loading = document.getElementById("loading");
@@ -740,17 +885,13 @@
             <p style="color: #e2e8f0; margin-bottom: 0.75rem;">
               Leaflet failed to load from all CDNs. This is common on restricted networks.
             </p>
-            <pre style="text-align:left; white-space: pre-wrap; background:#0b1220; border:1px solid #1f2937; padding:1rem; border-radius:8px; color:#e5e7eb; font-size:0.85rem; line-height:1.4;">
-${escapeHtml(err.message)}
-            </pre>
+            <pre style="text-align:left; white-space: pre-wrap; background:#0b1220; border:1px solid #1f2937; padding:1rem; border-radius:8px; color:#e5e7eb; font-size:0.85rem; line-height:1.4;">${escapeHtml(err.message)}</pre>
             <p style="color:#94a3b8; font-size:0.85rem; margin-top:0.75rem; line-height:1.4;">
               Fix options:
               <br>1) Try again on a network that allows unpkg/jsdelivr/cdnjs.
               <br>2) Vendor option: download Leaflet and host it locally in your repo, then reference local files.
             </p>
-            <button onclick="location.reload()" style="margin-top: 1rem; padding: 0.75rem 1.5rem; background: #2563eb; color: white; border: none; border-radius: 6px; cursor: pointer;">
-              Refresh Page
-            </button>
+            <button onclick="location.reload()" style="margin-top: 1rem; padding: 0.75rem 1.5rem; background: #2563eb; color: white; border: none; border-radius: 6px; cursor: pointer;">Refresh Page</button>
           </div>
         `;
       }
