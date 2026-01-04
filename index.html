@@ -317,7 +317,7 @@
     // ----------------------------
     // DEMO CONFIG
     // ----------------------------
-    const DEMO_AIRPORT_IDENTS = ["KCOS", "KAFF", "77CO", "68CO", "CO24", "19CO"];
+    const DEMO_AIRPORT_IDENTS = ["KCOS", "KAFF", "77CO", "KFLY", "CO24", "19CO"];
 
     // Where the demo airport coords came from:
     //  - Preferred: OurAirports airports.csv (live fetch)
@@ -325,7 +325,7 @@
     const FALLBACK_AIRPORTS = [
       { ident: "KAFF", label: "AFF", name: "Air Force Academy Airfield", lat: 38.9697, lon: -104.8128 },
       { ident: "77CO", label: "77CO", name: "Private Airstrip (Demo)", lat: 38.9150, lon: -104.8100 },
-      { ident: "68CO", label: "68CO", name: "Private Airstrip (Demo)", lat: 38.9300, lon: -104.7400 },
+      { ident: "KFLY", label: "FLY", name: "Meadow Lake Airport", lat: 38.945801, lon: -104.57 },
       { ident: "CO24", label: "CO24", name: "Private Airstrip (Demo)", lat: 38.8850, lon: -104.9000 },
       { ident: "19CO", label: "19CO", name: "Heliport/Airstrip (Demo)", lat: 38.8650, lon: -104.8200 },
       { ident: "KCOS", label: "COS", name: "City of Colorado Springs Municipal Airport", lat: 38.8058, lon: -104.7008 }
@@ -354,8 +354,8 @@
       // 77CO (P3 only)
       { id: 30, airport_ident: "77CO", type: "Pavement Damage", typeShort: "Pavement Damage", icao: "77CO", timestamp: "2025-01-25T15:22:00Z", coordinates: { lat: 38.9152, lon: -104.8102 }, confidence: 0.76, sourceImageTimestamp: "2025-01-25T13:10:00Z", estimatedHeight: null, status: "Active", priority: 3, description: "Surface anomaly detected on primary taxi surface" },
 
-      // 68CO (P2 only)
-      { id: 40, airport_ident: "68CO", type: "Vertical Obstruction", typeShort: "Vertical Obstruction", icao: "68CO", timestamp: "2025-01-24T08:40:00Z", coordinates: { lat: 38.9302, lon: -104.7402 }, confidence: 0.88, sourceImageTimestamp: "2025-01-24T07:05:00Z", estimatedHeight: "2.0m", status: "Active", priority: 2, description: "Equipment detected near approach surface" }
+      // KFLY (P2 only)
+      { id: 40, airport_ident: "KFLY", type: "Vertical Obstruction", typeShort: "Vertical Obstruction", icao: "KFLY", timestamp: "2025-01-24T08:40:00Z", coordinates: { lat: 38.9302, lon: -104.7402 }, confidence: 0.88, sourceImageTimestamp: "2025-01-24T07:05:00Z", estimatedHeight: "2.0m", status: "Active", priority: 2, description: "Equipment detected near approach surface" }
 
       // 19CO: intentionally no detections
     ];
@@ -545,7 +545,10 @@
             ident: header.indexOf("ident"),
             name: header.indexOf("name"),
             lat: header.indexOf("latitude_deg"),
-            lon: header.indexOf("longitude_deg")
+            lon: header.indexOf("longitude_deg"),
+            gps: header.indexOf("gps_code"),
+            local: header.indexOf("local_code"),
+            iata: header.indexOf("iata_code")
           };
           if (idx.ident < 0 || idx.lat < 0 || idx.lon < 0) throw new Error("OurAirports CSV schema unexpected.");
 
@@ -554,25 +557,44 @@
 
           for (let i = 1; i < lines.length; i++) {
             const row = parseCsvLine(lines[i]);
-            const ident = row[idx.ident];
-            if (!want.has(ident)) continue;
-
+            const ident = row[idx.ident] || "";
+            const gps = (idx.gps >= 0 ? row[idx.gps] : "") || "";
+            const local = (idx.local >= 0 ? row[idx.local] : "") || "";
+            const iata = (idx.iata >= 0 ? row[idx.iata] : "") || "";
+            
+            const match =
+              (want.has(ident) && ident) ||
+              (want.has(gps) && gps) ||
+              (want.has(local) && local) ||
+              (want.has(iata) && iata);
+            
+            if (!match) continue;
+            
             const lat = Number(row[idx.lat]);
             const lon = Number(row[idx.lon]);
             if (!Number.isFinite(lat) || !Number.isFinite(lon)) continue;
-
-            const label = ident === "KCOS" ? "COS" : (ident === "KAFF" ? "AFF" : ident);
-
+            
+            // Canonical ident for your app = whichever key we matched on
+            const canonicalIdent = match;
+            
+            // Label rules (keep COS/AFF special cases + add FLY)
+            const label =
+              canonicalIdent === "KCOS" ? "COS" :
+              canonicalIdent === "KAFF" ? "AFF" :
+              canonicalIdent === "KFLY" ? "FLY" :
+              canonicalIdent;
+            
             found.push({
-              ident,
+              ident: canonicalIdent,
               label,
-              name: row[idx.name] || ident,
+              name: row[idx.name] || canonicalIdent,
               lat,
               lon
             });
-
-            want.delete(ident);
+            
+            want.delete(canonicalIdent);
             if (want.size === 0) break;
+
           }
 
           if (want.size > 0) {
@@ -648,12 +670,14 @@
       // NEW: align detection coordinates to whichever airport source was used
       applyAirportCoordsToDetections(airports, 250);
 
+      /*
       // NEW: easy on-screen callout for demo
       const badge = document.getElementById("source-badge");
       if (badge) {
         badge.style.display = "block";
         badge.innerHTML = `Airport source: ${escapeHtml(AIRPORT_SOURCE)}<small>OurAirports live CSV vs hardcoded fallback</small>`;
       }
+      */
 
       airportMarkers.forEach(m => m.remove());
       airportMarkers = [];
