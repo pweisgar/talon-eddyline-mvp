@@ -125,6 +125,7 @@
     .progress-fill { background: #16a34a; height: 100%; transition: width 0.3s; }
     .confidence-value { font-weight: bold; font-size: 0.875rem; }
 
+    .image-grid { display: grid; grid-template-columns: repeat(2, 1fr)); gap: 1rem; margin-bottom: 1rem; }
     .image-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 1rem; margin-bottom: 1rem; }
     .image-container { border-radius: 6px; overflow: hidden; }
     .image-header { padding: 0.5rem; text-align: center; font-size: 0.875rem; font-weight: 600; }
@@ -561,29 +562,29 @@
             const gps = (idx.gps >= 0 ? row[idx.gps] : "") || "";
             const local = (idx.local >= 0 ? row[idx.local] : "") || "";
             const iata = (idx.iata >= 0 ? row[idx.iata] : "") || "";
-            
+
             const match =
               (want.has(ident) && ident) ||
               (want.has(gps) && gps) ||
               (want.has(local) && local) ||
               (want.has(iata) && iata);
-            
+
             if (!match) continue;
-            
+
             const lat = Number(row[idx.lat]);
             const lon = Number(row[idx.lon]);
             if (!Number.isFinite(lat) || !Number.isFinite(lon)) continue;
-            
+
             // Canonical ident for your app = whichever key we matched on
             const canonicalIdent = match;
-            
+
             // Label rules (keep COS/AFF special cases + add FLY)
             const label =
               canonicalIdent === "KCOS" ? "COS" :
               canonicalIdent === "KAFF" ? "AFF" :
               canonicalIdent === "KFLY" ? "FLY" :
               canonicalIdent;
-            
+
             found.push({
               ident: canonicalIdent,
               label,
@@ -591,10 +592,9 @@
               lat,
               lon
             });
-            
+
             want.delete(canonicalIdent);
             if (want.size === 0) break;
-
           }
 
           if (want.size > 0) {
@@ -731,17 +731,17 @@
       const detection = detections.find(d => d.id === detectionId);
       if (!detection) return;
       activeDetectionId = detectionId;
-    
+
       const priorityClasses = {
         1: "priority-1",
         2: "priority-2",
         3: "priority-3",
         4: "priority-4"
       };
-    
+
       document.getElementById("modal-subtitle").textContent =
         `ICAO: ${detection.icao} | Detection ID: ${detection.id}`;
-    
+
       const initialJson = buildAlertJson(detection, "", null, null);
 
       document.getElementById("modal-body").innerHTML = `
@@ -903,8 +903,16 @@
       document.getElementById("modal").classList.add("active");
     }
 
+    // UPDATED: reset scroll on close (reliable)
     function closeModal() {
-      document.getElementById("modal").classList.remove("active");
+      const modal = document.getElementById("modal");
+      modal.classList.remove("active");
+
+      // Reset both possible scroll containers (overlay + content)
+      modal.scrollTop = 0;
+      const scroller = modal.querySelector(".modal-content");
+      if (scroller) scroller.scrollTop = 0;
+
       activeDetectionId = null;
     }
 
